@@ -1,0 +1,50 @@
+
+<!-- Modal -->
+<div id="add" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title">Add New Mapping for Member Attributes</h4>
+      </div>
+      <div class="modal-body">
+		<form role="form" method="POST" action="{{base_url}}/mapping/create">
+			<div class="form-group">
+				<label for="cep">CEP Member Attribute</label>
+				<input type="hidden" class="form-control" name="cep_name" value="">
+				<input type="hidden" class="form-control" name="cep_attr_type" value="member">
+				<input type="hidden" class="form-control" name="cep_object" value="member">
+				<input type="hidden" class="form-control" name="cep_api_name" value="user.memberAttribute.{{ cep_member_attribute.name }}">
+				<input type="hidden" class="form-control" name="sfdc_object" value="lead">
+				<input type="text" class="form-control" id="cep" name="cep" placeholder="Type the member attribute name" value="">
+			</div>
+			<div class="form-group">
+				<label for="cep_value">CEP Value</label>
+				<select class="form-control" id="cep_value" name="cep_value"></select>
+			</div>
+			<div class="form-group">
+				<label for="function">Mapping Function</label>
+				<select class="form-control" id="sfdc_function" name="sfdc_function">
+					<option value="insert" selected>Insert</option>
+					<option value="add">Add</option>
+					<option value="subtract">Subtract</option>
+					<option value="concat_comma">Concatenate</option>
+				</select>
+			</div>
+			<div class="form-group">
+				<label for="sfdc">Salesforce field</label>
+				<select name="sfdc" class="form-control" id="sfdc" name="sfdc"></select>
+			</div>
+			<div class="form-group">
+				<label for="sfdc_value">Map to SFDC value</label>
+				<input type="text" name="sfdc_value" class="form-control" id="sfdc_value" name="sfdc_value">
+			</div>
+			<button type="submit" class="btn btn-info">Save</button>
+		</form>
+      </div>
+    </div>
+
+  </div>
+</div>

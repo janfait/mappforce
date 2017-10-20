@@ -1,0 +1,194 @@
+
+{% include 'admin/header.twig' %}
+{% include 'admin/sidebar.twig' %}
+
+	{# -------------------------------- #}
+	{# ------------ Header------------- #}
+	{# -------------------------------- #}
+	<header class="mdl-layout__header ui-page-header">
+		<div class="mdl-layout__header-row">
+			<!-- Title -->
+			<span class="mdl-layout-title">Getting Started</span>
+			<!-- Add spacer, to align navigation to the right -->
+			<div class="mdl-layout-spacer"></div>
+			<!-- Navigation. We hide it in small screens. -->
+			<nav class="mdl-navigation">
+			</nav>
+		</div>
+
+	</header>
+	
+	<!-- Content area under page header -->
+	<div class="mdl-layout__content">
+		<div class="ui-page-content">
+
+		
+			<div class="mdl-card mdl-shadow--2dp ui-page-card">
+				<div class="mdl-card__supporting-text">
+				<!-- Your content goes here -->
+				<h3>What is Mapp Force?</h3>
+				<hr>
+					<p>Mapp Force is an application developed by Mapp Digital which facilitates transfer of data between the Mapp Customer Engagment Platform (CEP) and Salesforce CRM.</p>
+					<p>The application allows the user to configure which data is transfered between the two systems and how are Mapp CEP attributes mapped to corresponding Salesforce fields.</p>
+					<p>For illlustration, consider an event occuring in your Mapp CEP system, such as an Email Message is opened by a Contact, a Contact entering a Group or its Profile attribute changing. 
+					Using Automations feature of Mapp CEP, you are able to fire an outgoing HTTP request any of the Mapp Force endpoints with information about that event and its context by including a message body in a defined format. 
+					Have you configured your Salesforce CRM mapping, settings and credentials in the <strong>Settings</strong> section, Mapp Force connects to your Salesforce instance and performs a data operation defined by the endpoint, commonly an insert or update of the corresponding record.</p>	
+				
+				<h5>Contents</h5>
+				<ul class="mdl-list">
+					<li class="mdl-list__item"><span><a href="#requirements">1. Requirements</a></span></li>
+					<li class="mdl-list__item"><a href="#configuration">2. Configuration</a></li>
+					<li class="mdl-list__item"><a href="#operation">3. Operation</a></li>
+				</ul>
+				</div>
+				
+
+			</div>
+			
+			<br>
+			<div class="mdl-card mdl-shadow--2dp ui-page-card">
+				<div class="mdl-card__supporting-text">
+				<!-- Your content goes here -->
+				<h3 id="requirements">1. Requirements</h3>
+				<hr>
+				Make sure all the below requirements are met before you start configuring your Mapp Force instance.
+					<ul class="demo-list-three mdl-list">
+					
+					<h4>Mapp Customer Engagement Platform</h4>
+					<hr>
+					  <li class="mdl-list__item mdl-list__item--three-line">
+						<span class="mdl-list__item-primary-content">
+						<i class="material-icons">assignment_turned_in</i>
+						  <span>REST API 2.0</span>
+						  <span class="mdl-list__item-text-body">
+								REST API allows that data is brought over from Salesforce to Mapp CEP and back. In addition to this, it also serves for user management.
+						  </span>
+						</span>
+					  </li>
+					  <li class="mdl-list__item mdl-list__item--three-line">
+						<span class="mdl-list__item-primary-content">
+						<i class="material-icons">assignment_turned_in</i>
+						  <span>Automations</span>
+						  <span class="mdl-list__item-text-body">
+								Automations allow you to fire a event-based job anytime an event which you want to mirror in Salesforce has occured.
+						  </span>
+						</span>
+					  </li>
+					  <li class="mdl-list__item mdl-list__item--three-line">
+						<span class="mdl-list__item-primary-content">
+						<i class="material-icons">assignment_turned_in</i>
+						  <span>Transport Security</span>
+						  <span class="mdl-list__item-text-body">
+							This allows that an HTTP Basic Authorization header can be added to the outgoing HTTP requests. Transport security has to be enabled by your Account Manager or Mapp Customer Support Service.
+						  </span>
+						</span>
+					  </li>
+					  <li class="mdl-list__item mdl-list__item--three-line">
+						<span class="mdl-list__item-primary-content">
+						<i class="material-icons">assignment_turned_in</i>
+						  <span>IP Whitelisting</span>
+						  <span class="mdl-list__item-text-body">
+							The IP of the server, where your instance of Mapp Force is deployed has to be whitelisted to access the Mapp CEP. This configuration is only relevant if your Mapp Force instance is self-hosted on one of your proprietary servers.
+						  </span>
+						</span>
+					  </li>
+					</ul>
+					
+					
+					<h4>Salesforce</h4>
+					<hr>
+					  <li class="mdl-list__item mdl-list__item--three-line">
+						<span class="mdl-list__item-primary-content">
+						<i class="material-icons">assignment_turned_in</i>
+						  <span>System Administrator Profile</span>
+						  <span class="mdl-list__item-text-body">
+								While some Mapp Force functionality may be available even for lower level roles, a System Administrator profile ensures that you will be able to retrieve your object definitions like custom fields, perform edits and deletions to all records and send email notifications.
+						  </span>
+						</span>
+					  </li>
+					  <li class="mdl-list__item mdl-list__item--three-line">
+						<span class="mdl-list__item-primary-content">
+						<i class="material-icons">assignment_turned_in</i>
+						  <span>SOAP API enabled with sufficient limits</span>
+						  <span class="mdl-list__item-text-body">
+							All operations in Salesforce are performed via its SOAP API Client. Even when your API is enabled, make sure that your API Limits are sufficent, especially if planning to transfer email interactions.
+						  </span>
+						</span>
+					  </li>
+					  <li class="mdl-list__item mdl-list__item--three-line">
+						<span class="mdl-list__item-primary-content">
+						<i class="material-icons">assignment_turned_in</i>
+						  <span>Marketing User</span>
+						  <span class="mdl-list__item-text-body">
+							Your Profile should have the Marketing User checkbox checked, or the corresponding privileges for creating campaigns enabled.
+						  </span>
+						</span>
+					  </li>
+					</ul>
+					
+				</div>
+			</div>
+			
+			<br>
+			<div class="mdl-card mdl-shadow--2dp ui-page-card">
+				<div class="mdl-card__supporting-text">
+				<!-- Your content goes here -->
+				<h3 id="configuration">2. Configuration</h3>
+				<hr>
+
+						  <h4>Settings - Salesforce</h4>
+						  <hr>
+						  <span>
+								To allow the Mapp Force to connect to your Salesforce instance, go to 'Settings' in the left-hand side menu and populate the required fields. The security token 
+								can be found in your Salesforce CRM UI under <strong>'My Settings' > 'Personal' > 'Reset Security Token'</strong>. Please remember that anytime you reset your security token, you have to update it in the Mapp Force settings.
+								Once you have completed You can test the connection to your Salesforce instnace by pressing the 'Test Connection' button. 
+						  </span>
+
+						  <h4>Settings - Mapp CEP</h4>
+						  <hr>
+						  <span>
+								The Mapp CEP contains a number of useful configuration options for the data transfer. While none of these are essential
+								for the functioning of Mapp Force, you can apply some common transformations to Country and Language codes.
+						  </span>
+
+						  <h4>Mapping - Leads and Contacts</h4>
+						  <hr>
+						  <span>
+							The Mapping section allows you to map attributes defined in your Mapp CEP instance with the existing fields in your Salesforce CRM instance.
+							This mapping can differ for Salesforce CRM Lead and Contact entities.
+							There are three kinds of attributes you can map:
+
+								<h5>Standard Attributes</h5>
+								<span>Standard Attributes are identical for every instance of Mapp CEP and you will not be able to change them. You can however map them to any Salesforce fields.
+								Your mapping has to include at least one of the three allowed unique identifiers for data transfer. These are <strong>user.Email, user.Identifier or user.MobileNumber</strong>. Other identifiers may be considered in 
+								future releases.
+								</span>
+
+								<h5>Custom Attributes</h5>
+								Custom Attributes are created by Mapp CEP users and are sourced after the user has logged into Mapp Force. Therefore, you will see the up-to-date state of your Custom Attributes, ready for mapping anytime you log in.
+
+								<h5>Member Attributes and Custom Values</h5>
+								Member Attributes only exist in a Mapp CEP Group membership context - the Contact can have multiple member attributes of the same name in multiple groups, but their values can be different in every group the Contact is a member of. Due to this, the definition of mapping for 
+								member attributes is different from the Standard and Custom Attribute. You have to define the name of the member attribute yourself and map it to existing Salesforce fields, one by one. Effectively, this allows you to name your Member attributes any way you want - with the exception of currently existing mappings.
+							
+							<br><br>
+							After you have defined mapping for Leads and Contacts, your Mapp Force is ready to use. See the <a href="#operation">Operation</a> section to get started. To fully utilize the functionality of Mapp Force and reflect the structure of your Mapp CEP system, it is also recommended to
+							configure options of how will the Mapp CEP Contact actions, group memberships and other events be translated into Salesforce Campaign Memberships.
+
+						  </span>
+
+						  <h4>Mapping - Campaign</h4>
+						  <hr>
+						  <span>
+							Although the closest entity to Salesforce Campaign is the Mapp CEP Group, the mapping is not limited to selected Group Settings and all custom Group Attributes, but also, just like in the above case for Member Attributes, allows you to populate custom fields on the Campaign with user-defined data.
+							As the attributes are group-specific, Mapp Force cannot preload them for mapping like in the case of Standard and Custom Attributes. 
+						  </span>
+
+				</div>
+			</div>
+
+
+    </div>
+</div>
+
+{% include 'admin/footer.twig' %}

@@ -1,0 +1,157 @@
+
+<!doctype html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>Mapp Integrator</title>
+
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="icon" type="image/x-icon" href="assets/img/favicon.ico">
+
+	<!-- Google Material Icons -->
+	<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+
+	<!-- JQuery -->
+	<script src="../js/jquery-1.12.4.min.js"></script>
+	
+	<!-- Material Design Lite CSS and JavaScript -->
+	<link rel="stylesheet" href="{{base_url}}/css/material.light_blue-cyan.min.css" />
+	<script defer src="{{base_url}}/js/material.min.js"></script>
+
+	<!-- UI Material Lite Theme -->
+	<link rel="stylesheet" href="{{base_url}}/css/ui-material-lite-theme.css"/>
+	<link rel="stylesheet" href="{{base_url}}/css/admin.css" />
+
+	<!-- UI Material Lite Theme -->
+	<link rel="stylesheet" href="{{base_url}}/css/ui-material-lite-theme.css"/>
+	<link rel="stylesheet" href="{{base_url}}/css/admin.css"/>
+	
+	<!-- Roboto Font -->
+	<style>
+		@import url('https://fonts.googleapis.com/css?family=Roboto');
+	</style>	
+</head>
+	<body>
+	
+		<!-- Always shows a header, even in smaller screens. -->
+		<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+			<header class="mdl-layout__header mdl-layout__header--seamed ui-app-header">
+				<div class="mdl-layout__header-row mdl-layout__header--seamed">
+				<div class="ui2-app-header-logo"></div>
+				<!-- Title -->
+				<span class="mdl-layout-title">MappForce</span>
+				<!-- Add spacer, to align navigation to the right -->
+				<div class="mdl-layout-spacer"></div>
+				<!-- App Header Actions. You can use different kind of icons and buttons in here -->
+				<nav class="mdl-navigation">
+				</nav>
+				</div>
+			</header>
+			<main class="mdl-layout__content">
+
+
+				<!-- Content area under page header -->
+
+					<div class="ui-page-content">
+
+						<div class="mdl-card mdl-shadow--4dp ui-page-card">
+
+							<div class="mdl-card__supporting-text">
+							
+								<h3>Login</h3>
+								<p> Welcome! Mapp Integrator uses CEP API User account to communicate with your system. To login, you will need to know the unique name of your CEP system and credentials for one of your API or Hybrid User accounts.
+
+								{% if debug %}
+									<div class="mdl-components__warning">
+										<b>Warning:</b>
+										You are working in debug mode
+									</div>
+								{% endif %}
+								
+								{% if error %}
+									<div class="mdl-components__warning">
+										<b>Error:</b>
+										{{error_message}}
+									</div>
+								{% endif %}
+								
+								{% if success %}
+									<div class="mdl-components__success">
+										{{success_message}}
+									</div>
+								{% endif %}
+
+								<form action="{{base_url}}/login" method="POST">
+									<div class="mdl-grid">
+										<div class="mdl-cell mdl-cell--6-col">
+											<div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+													<input class="mdl-textfield__input" type="text" id="sysname" name="sysname" {% if debug %}value="ecircle_marketing"{% endif %} data-required>
+													<label class="mdl-textfield__label" for="sysname">Mapp CEP System Name</label>
+													<span class="mdl-textfield__error">This is a required field</span>
+											</div>
+										</div>
+										<div class="mdl-cell">
+											<div id="tt_sysname" class="icon material-icons">info</div>
+												<div class="mdl-tooltip" data-mdl-for="tt_sysname">
+												A part of the URL uniquely identifying your CEP system.
+											</div>
+										</div></br>
+										<div class="mdl-cell mdl-cell--6-col">
+											<div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+													<input class="mdl-textfield__input" type="text" id="username" name="username" {% if debug %}value="apiuser2@teradata.com"{% endif %} data-required>
+													<label class="mdl-textfield__label" for="username">Mapp API User</label>
+													<span class="mdl-textfield__error">This is a required field</span>
+											</div>
+										</div>
+										<div class="mdl-cell">
+											<div id="tt_username" class="icon material-icons">info</div>
+												<div class="mdl-tooltip" data-mdl-for="tt_username">
+												The username of your API User
+											</div>
+										</div>
+										<div class="mdl-cell mdl-cell--6-col">
+											<div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+													<input class="mdl-textfield__input" type="password" name="password" id="password" {% if debug %}value=""{% endif %} data-required>
+													<label class="mdl-textfield__label" for="password">Password</label>
+													<span class="mdl-textfield__error">This is a required field</span>
+											</div>
+										</div>
+										<div class="mdl-cell">
+											<div id="tt_password" class="icon material-icons">info</div>
+												<div class="mdl-tooltip" data-mdl-for="tt_password">
+												The password for the API User
+											</div>
+										</div>
+									</div>
+
+									<div class="mdl-card__actions">
+										<div class="section__text mdl-cell mdl-cell--12-col-desktop mdl-cell--6-col-tablet mdl-cell--3-col-phone" >
+											<div class="mdl-layout-spacer"></div>
+											<!-- Submission -->
+											<button id="login" type="submit" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">
+												Login
+											</button>
+										</div>
+									</div>
+								</form>
+								<hr>
+								<p>Mapp Integrator is a product of Mapp Digital/MEME Gmbh. For more information contact your customer representative or visit and reach out to us at <a href="https://mapp.com/contact">Mapp.com</a></p>
+							</div>
+						</div>
+
+					</div>
+
+			</main>
+		</div>
+		<script type="text/javascript">
+			//handler for required fields
+			$(function() {
+			  componentHandler.registerUpgradedCallback('MaterialTextfield', function(textfield) {
+				var input = $(textfield).find('.mdl-textfield__input');
+				if (input.data('required') != null) input.attr('required', true);
+			  });
+			});
+		</script>
+	</body>
+</html>

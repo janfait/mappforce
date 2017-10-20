@@ -1,0 +1,406 @@
+/*UI Theme for Material Design Lite*/
+
+body {
+	background-color: #eee;
+}
+
+a {
+	color: #03a9f4;
+}
+
+/* app header */
+
+.ui-app-header.mdl-layout__header {
+	background-color: #236192;
+	box-shadow: none;
+	color: #fff;
+	height: 54px;
+	min-height: 54px;	
+}
+
+.ui-app-header.mdl-layout__header .mdl-layout__drawer-button {
+	border-radius: 50%;
+	color: #fff;
+	height: 40px;
+	line-height: 47px;
+	margin: 7px 12px 8px 13px;
+	width: 40px;
+}
+
+.ui-app-header.mdl-layout__header .mdl-layout__drawer-button:hover {
+	background-color: rgba(0,0,0,0.15);
+}
+
+.ui-app-header.mdl-layout__header .mdl-layout__drawer-button:focus {
+	border: none;
+	outline: none;
+}
+
+.ui-app-header .mdl-layout__header-row {
+	height: 54px;
+	min-height: 54px;
+	padding: 0 13px 0 53px;
+}
+
+.ui-app-header.mdl-layout__header .ui2-app-header-logo {
+	background: url('../assets/img/logo.svg') top left no-repeat;
+	background-position: left 20px;
+	height: 100%;
+	float: left;
+	margin-left: 13px;
+	margin-right: 6px;
+	width: 71px;
+}
+
+.ui-app-header.mdl-layout__header .mdl-layout-title {
+	font-size: 14px;
+	margin-left: 12px;
+}
+
+.ui-app-header.mdl-layout__header .mdl-navigation .material-icons {
+	color: #fff;
+	text-align: center;
+	height: 40px;
+	width: 40px;
+	line-height: 40px;
+	margin-left: 4px;
+}
+
+.ui-app-header.mdl-layout__header .mdl-navigation .mdl-button--icon {
+	height: 40px;
+	width: 40px;
+	margin-left: 4px;
+}
+
+.ui-app-header.mdl-layout__header .mdl-navigation .mdl-button--icon:hover {
+	background-color: rgba(0,0,0,0.15);
+}
+
+.ui-app-header.mdl-layout__header .mdl-navigation .mdl-button--icon .material-icons {
+	height: 24px;
+	width: 24px;
+	line-height: 1;
+	margin-left: 0;
+}
+
+.ui-app-header.mdl-layout__header .mdl-navigation .mdl-badge.mdl-badge--overlap {
+	margin-right: 0;
+}
+
+.ui-app-header.mdl-layout__header .mdl-navigation .mdl-badge[data-badge]:after {
+	background-color: red;	
+	color: #fff;
+	font-size: 9px;
+	height: 16px;
+	right: 4px;
+	top: 3px;
+	width: 16px;
+}
+
+/* end app header */
+
+/* nav */
+
+.mdl-layout__drawer {
+	background-color: #30333E;
+	border: none;
+	color: #fff;
+	height: calc(100% - 54px);
+    margin-top: 54px;
+    min-width: 280px;
+    -webkit-transform: translateX(-280px);
+    transform: translateX(-280px);
+    transition: transform .4s cubic-bezier(.25,.8,.25,1); 
+}
+
+.mdl-layout__drawer .mdl-navigation {
+	padding: 0;
+}
+
+.mdl-layout__drawer .mdl-navigation ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.mdl-layout__drawer .mdl-navigation ul li {
+    position: relative;
+    padding: 0;
+    margin: 0;
+    line-height: 48px;
+    display: block;
+    max-width: inherit;
+    border-bottom: 1px solid #292b31;
+}
+
+.mdl-layout__drawer .mdl-navigation ul li input[type=checkbox] {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+    opacity: 0;
+    margin: 0;
+
+    &:hover {
+      cursor: pointer;
+      cursor: hand;
+    }
+  }
+
+.mdl-layout__drawer .mdl-navigation ul li [type=checkbox]:hover {
+	cursor: pointer;
+	cursor: hand;
+
+}
+
+.mdl-layout__drawer .mdl-navigation .material-icons {
+    position: absolute;
+    left: 24px;
+    height: 50px;
+    line-height: 50px;
+    font-size: 18px;
+    text-align: center;
+    z-index: 1;
+}
+
+.mdl-layout__drawer .mdl-navigation .ui-nav-arrow {
+	font-size: 20px;
+	left: inherit;
+	right: 10px;
+	width: 50px;
+}
+
+.mdl-layout__drawer .mdl-navigation ul li input[type=checkbox]:checked ~ .ui-nav-arrow {
+    transform: rotate(180deg);
+    -ms-transform: rotate(180deg);
+  }
+
+.mdl-layout__drawer .mdl-navigation .mdl-navigation__link {
+	color: #fff;
+	line-height: 48px;
+	padding: 0;
+	padding-left: 66px;
+}
+
+.mdl-layout__drawer .mdl-navigation .mdl-navigation__link:hover {
+	background-color: #292B31;
+}
+
+/*for parent elements that are expandable*/
+.mdl-layout__drawer .mdl-navigation ul li input:hover ~ .mdl-navigation__link {
+	background-color: #292B31;
+}
+
+/*SubNavigation Comopnent*/
+
+.mdl-layout__drawer .mdl-navigation ul li input[type=checkbox]:checked ~ ul {
+    margin-top: 0;
+    max-height: 0;
+    opacity: 0;
+}
+
+.mdl-layout__drawer .mdl-navigation ul li ul {
+	position: relative;
+	overflow: hidden;
+	opacity: 1;
+	max-width: inherit;
+	z-index: 2;
+	transition: opacity 0.25s ease;
+}
+
+
+.mdl-layout__drawer .mdl-navigation ul li ul li {
+	border-bottom: none;
+	cursor: pointer;
+	cursor: hand;
+}
+
+.mdl-layout__drawer .mdl-navigation ul li ul li .mdl-navigation__link {
+	color: #BDBDBD;
+}
+      
+.mdl-layout__content {
+	display: block;
+	transition-duration: .4s;
+    transition-timing-function: cubic-bezier(.25,.8,.25,1);
+    transition-property: transform,margin-left,margin-right;
+}
+
+.mdl-layout__drawer.is-visible~.mdl-layout__content.mdl-layout__content {
+	margin-left: 280px;
+	overflow-y: auto;
+}
+
+.mdl-layout__obfuscator {
+	display: none;
+}
+   
+/* end nav */
+
+/* page header */
+
+.ui-page-header {
+	background-color: white;
+	box-shadow: 0 3px 1px -2px rgba(0,0,0,.2), 0 2px 2px 0 rgba(0,0,0,.14), 0 1px 5px 0 rgba(0,0,0,.12);
+	display: block;
+    min-height: 64px;
+}
+
+.ui-page-header .mdl-layout__header-row{
+	height: 100%;
+	padding-left: 23px;
+	padding-right: 24px;
+}
+
+.ui-page-header .mdl-layout-title {
+	color: #616161;
+	font-size: 24px;
+	margin-top: 1px;
+}
+
+.ui-page-header .mdl-navigation .mdl-button {
+	top: 4px;
+	margin-left: 4px;
+}
+
+.ui-page-header .mdl-navigation .mdl-button:not(.mdl-button--raised) .material-icons {
+	color: #616161;
+}
+
+.ui-page-header .mdl-navigation .mdl-button--raised {
+	top: 0;
+}
+
+.ui-page-header .mdl-navigation .mdl-button--icon {
+	top: 3px;
+}
+
+.ui-page-header .mdl-navigation .mdl-button--icon .material-icons {
+	color: #9e9e9e;
+	font-size: 20px;
+	line-height: 24px;
+}
+
+/* end page header */
+
+/* page header tabs */
+
+.ui-page-header .mdl-layout__tab-bar,
+.ui-page-header .mdl-layout__tab-bar-button {
+	background-color: #fff;
+}
+
+.ui-page-header .mdl-layout__tab-bar {
+	padding-left: 0;
+	width: calc(100% - 56px);
+}
+
+.ui-page-header .mdl-layout__tab-bar-left-button {
+	display: none;
+}
+
+.ui-page-header .mdl-layout__tab-bar-left-button.is-active {
+	display: inline-block;
+}
+
+.ui-page-header .mdl-layout__tab-bar-left-button.is-active ~ .mdl-layout__tab-bar {
+	padding-left: 56px;
+	width: calc(100% - 112px);
+}
+
+.mdl-layout.is-upgraded .ui-page-header .mdl-layout__tab.is-active::after {
+	background-color: #03a9f4;
+}
+
+/* end page header tabs */
+
+/* content area */
+
+.ui-page-content {
+	padding: 24px;
+}
+
+/* end content area */
+
+/* page card */
+
+.ui-page-card {
+	margin-left: auto;
+    margin-right: auto;
+	width: 810px;
+}
+
+.ui-page-card .mdl-card__supporting-text {
+	padding: 24px;
+}
+
+/* end page card */
+
+
+/* table */
+
+.mdl-data-table > td {
+	padding: 10px;
+	
+}
+
+.mdl-data-table.mdl-textfield {
+	padding: 2px;
+}
+/* end table */
+
+
+/* buttons */
+
+.mdl-button {
+	letter-spacing: 0.025em;
+	color: #616161;
+}
+
+.mdl-button.mdl-button--primary:hover,
+.mdl-button.mdl-button--colored:hover {
+	background-color: rgba(3, 169, 244, 0.12);
+}
+
+.mdl-button.mdl-button--accent:hover {
+	background-color: rgba(0, 188, 212, 0.12);
+}
+
+.mdl-button--accent.mdl-button--accent {
+	color: #00bcd4;
+}
+
+.mdl-button--raised.mdl-button--colored,
+.mdl-button--primary.mdl-button--primary.mdl-button--raised,
+.mdl-button--accent.mdl-button--accent.mdl-button--raised,
+.mdl-button--fab.mdl-button--colored,
+.mdl-button--primary.mdl-button--primary.mdl-button--fab,
+.mdl-button--accent.mdl-button--accent.mdl-button--fab {
+	color: #fff;
+}
+
+.mdl-button--accent.mdl-button--accent.mdl-button--raised,
+.mdl-button--fab.mdl-button--colored,
+.mdl-button--accent.mdl-button--accent.mdl-button--fab {
+	background-color: #00bcd4;
+}
+
+.mdl-button.mdl-button--primary.mdl-button--raised:hover,
+.mdl-button.mdl-button--colored.mdl-button--raised:hover,
+.mdl-button.mdl-button--primary.mdl-button--fab:hover {
+	background-color: #03a9f4;
+}
+
+.mdl-button.mdl-button--colored.mdl-button--fab:hover {
+	background-color: #00bcd4;
+}
+
+.mdl-button.mdl-button--icon:not(.mdl-button--colored):not(.mdl-button--primary):not(.mdl-button--accent) {
+	color: #9e9e9e;
+}
+
+.mdl-button:not(.mdl-button--icon):not(.mdl-button--fab) .material-icons {
+	margin-right: -6px;
+}
+
+/* end buttons */

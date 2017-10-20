@@ -1,0 +1,34 @@
+<!doctype html>
+<html>
+{% include 'admin/head.twig' %}
+	<body>
+	{% include 'admin/sidebar.twig' %}
+	
+		<!-- Always shows a header, even in smaller screens. -->
+		<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+			<header class="mdl-layout__header mdl-layout__header--seamed ui-app-header">
+				<div class="mdl-layout__header-row mdl-layout__header--seamed">
+				<div class="ui2-app-header-logo"></div>
+				<!-- Title -->
+				<span class="mdl-layout-title">MappForce</span>
+				<!-- Add spacer, to align navigation to the right -->
+				<div class="mdl-layout-spacer"></div>
+				<!-- App Header Actions. You can use different kind of icons and buttons in here -->
+				<nav class="mdl-navigation">
+					{{ user.firstName }} {{ user.lastName }}
+					<a id="user" href="#"><i id="user-nav-icon" class="material-icons">person</i></a>
+					<div class="mdl-tooltip" data-mdl-for="user-nav-icon">
+						User Details
+					</div>
+					<a id="help" href="#"><i id="help-nav-icon" class="material-icons">help</i></a>
+					<div class="mdl-tooltip" data-mdl-for="help-nav-icon">
+						Get Help
+					</div>
+					<a href="{{base_url}}/logout"><i id="logout-nav-icon" class="material-icons">exit_to_app</i></a>
+					<div class="mdl-tooltip" data-mdl-for="logout-nav-icon">
+						Log out
+					</div>
+					
+				</nav>
+				</div>
+			</header>

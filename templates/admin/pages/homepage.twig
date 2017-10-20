@@ -1,0 +1,78 @@
+{% include 'admin/header.twig' %}
+{% include 'admin/menu.twig' %}
+{% include 'admin/sidebar.twig' %}
+
+<!-- Main Content  -->
+<main class="mdl-layout__content">
+	<!-- Page Header -->
+	<header class="mdl-layout__header ui-page-header">
+		<div class="mdl-layout__header-row">
+			<!-- Title -->
+			<span class="mdl-layout-title">Home</span>
+			<!-- Add spacer, to align navigation to the right -->
+			<div class="mdl-layout-spacer"></div>
+			<!-- Page Header Actions. Allows for flat and raised buttons including menus -->
+			<nav class="mdl-navigation">
+			</nav>
+		</div>
+	</header>
+	<!-- Content area under page header -->
+	<div class="ui-page-content">
+
+	<section class="section--center mdl-grid">
+		
+
+				<div id="home-card-started" class="mdl-card mdl-shadow--2dp home-card-square">
+				  <div class="mdl-card__title mdl-card--expand">
+					<h2 class="mdl-card__title-text">Getting Started</h2>
+				  </div>
+				  <div class="mdl-card__supporting-text">
+					Learn about the requirements, correct setup and usage of MappForce in the Getting Started section
+				  </div>
+				  <div class="mdl-card__actions mdl-card--border">
+					<a href="{{base_url}}/admin/getting-started" class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect">
+					  How to get started
+					</a>
+				  </div>
+				</div>
+				
+				<div id="home-card-settings" class="mdl-card mdl-shadow--2dp home-card-square">
+				  <div class="mdl-card__title mdl-card--expand">
+					<h2 class="mdl-card__title-text">Settings</h2>
+				  </div>
+				  <div class="mdl-card__supporting-text">
+					Connect your CEP and Salesforce platforms and configure other useful options of data transfer in the Settings section
+				  </div>
+				  <div class="mdl-card__actions mdl-card--border">
+					<a href="{{base_url}}/admin/settings" class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect">
+					  Go To Settings
+					</a>
+				  </div>
+				</div>
+				
+				
+				<div id="home-card-mapping" class="mdl-card mdl-shadow--2dp home-card-square">
+				  <div class="mdl-card__title mdl-card--expand">
+					<h2 class="mdl-card__title-text">Mapping</h2>
+				  </div>
+				  <div class="mdl-card__supporting-text">
+					Define your custom mapping between CEP and Salesforce entities in the Mapping section
+				  </div>
+				  <div class="mdl-card__actions mdl-card--border">
+					<a href="{{base_url}}/admin/mapping" class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect">
+					  Go To Mapping
+					</a>
+				  </div>
+				</div>
+
+			
+
+				
+
+	</section>
+		
+
+	</div>
+</main>
+
+{% include 'admin/footer.twig' %}

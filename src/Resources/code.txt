@@ -1,0 +1,10 @@
+												<div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label getmdl-select getmdl-select__fix-height">
+													<input class="mdl-textfield__input" type="text" id="sfdc_function{{ cep_standard_attribute.name }}" name="sfdc_function" readonly tabIndex="-1">
+													<ul for="sfdc_function{{ cep_standard_attribute.name }}" class="mdl-menu mdl-menu--bottom-left mdl-js-menu">
+														<li class="mdl-menu__item" data-val="insert">Insert</li>
+														<li class="mdl-menu__item" data-val="concat_comma">Concatenate to (,)</li>
+														<li class="mdl-menu__item" data-val="concat_semi">Concatenate to (;)</li>
+														<li class="mdl-menu__item" data-val="add">Add (+)</li>
+														<li class="mdl-menu__item" data-val="sub">Subtract (-)</li>
+													</ul>
+												</div>
