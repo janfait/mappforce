@@ -207,6 +207,19 @@ class SettingsDictionary {
 			'editable'=>false,
 			'picklist'=>null
 		),
+		'sfdc_access_token_expires_at'=>array(
+			'realm'=>'sfdc',
+			'category'=>'main',
+			'name'=>'sfdc_access_token_expires_at',
+			'required'=>false,
+			'value'=>'',
+			'label'=>'Access Token',
+			'icon'=>'verified_user',
+			'description'=>'Expiry date of the current access token',
+			'type'=>'text',
+			'editable'=>false,
+			'picklist'=>null
+		),
 		'sfdc_refresh_token'=>array(
 			'realm'=>'sfdc',
 			'category'=>'main',

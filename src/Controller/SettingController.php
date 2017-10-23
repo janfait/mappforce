@@ -17,21 +17,32 @@ class SettingController extends Controller
 {
 	
 	public function testConnection(Request $request, Response $response, $args){
-		if(empty($this->sfdc_session)){
-			$this->sfdc_login();
-		}
+		//login
+		$this->sfdc_login();
+		//collect user info
 		$sfdc_user = $this->sfdc_client->getUserInfo();
+		//return
 		return $response->withJson($sfdc_user);
 	}
 
 	public function authorize(Request $request, Response $response, $args){
 		//revert if oauth settings are not initialized
-		if(is_null($this->sfdc_oauth_client)){
-			return $response->withRedirect($this->container->router->pathFor('getSetting',[],['success'=>false]));
+		$this->_sfdc_collect_settings();
+		//check presence of authorization settings
+		if(!$this->_sfdc_check_authorization_settings()){
+			return $response->withRedirect($this->container->router->pathFor('getSetting',[],['success'=>0,'error_message'=>'missing_settings']));
 		}
-		//go to authorization url
+		//if oauth client has not been initialized, pass back
+		if(is_null($this->sfdc_oauth_client)){
+			return $response->withRedirect($this->container->router->pathFor('getSetting',[],['success'=>0,'error_message'=>'no_oauth_client']));
+		}
+		//define scope, has to be identical to the connected app scope
+		$options = [
+			'scope' => ['api','id','refresh_token']
+		];
+		//get auth url
 		$authorization_url = $this->sfdc_oauth_client->getAuthorizationUrl();
-		//redirect to authorization
+		//redirect to authorization url
 		return $response->withRedirect($authorization_url);
 		
 	}
@@ -39,56 +50,23 @@ class SettingController extends Controller
 	public function oauth(Request $request, Response $response, $args){
 		//collect query parameters
 		$query = $request->getQueryParams();
-		//collect authorization code arriving from the authorization_url
+		//collect authorization code arriving from the authorization url
 		$authorization_code = $query['code'];
-		//collect the request state
+		//collect the request state arriving from the authorization url
 		$state = $query['state'];
 		//check state
-		
+		if(empty($authorization_code)){
+			return $response->withRedirect($this->container->router->pathFor('getSetting',[],['success'=>0,'error_message'=>'missing_authorization_code']));
+		}
 		//pass it to the oauth token collector
 		$oauth_token = $this->_sfdc_collect_oauth_token($authorization_code);
-		//check if it has expired and refresh
-
-		//save the setting
-		if(isset($oauth_token['access_token'])){
-			$value = $oauth_token['access_token'];
-			$setting = Setting::where('name','sfdc_access_token')->first();
-			if($setting){
-				if($setting->type=='password'){
-					$setting->value = $this->_encrypt($value,$this->settings['secret']);
-				}else{
-					$setting->value = $value;
-				}
-				$setting->save();
-			}
+		if($outh_token['error']){
+			return $response->withRedirect($this->container->router->pathFor('getSetting',[],['success'=>0,'error_message'=>'failed_oauth_request']));
 		}
-		if(isset($oauth_token['id'])){
-			$value = $oauth_token['id'];
-			$setting = Setting::where('name','sfdc_server_url')->first();
-			if($setting){
-				if($setting->type=='password'){
-					$setting->value = $this->_encrypt($value,$this->settings['secret']);
-				}else{
-					$setting->value = $value;
-				}
-				$setting->save();
-			}
-		}
-		if(isset($oauth_token['refresh_token'])){
-			$value = $oauth_token['refresh_token'];
-			$setting = Setting::where('name','sfdc_refresh_token')->first();
-			if($setting){
-				if($setting->type=='password'){
-					$setting->value = $this->_encrypt($value,$this->settings['secret']);
-				}else{
-					$setting->value = $value;
-				}
-				$setting->save();
-			}
-		}
-		
-		//go back to settings
-		return $response->withRedirect($this->container->router->pathFor('getSetting',[],['success'=>true]));
+		//store the token elements
+		$storage_result = $this->_sfdc_store_oauth_token($oauth_token);
+		//go back to settings with message
+		return $response->withRedirect($this->container->router->pathFor('getSetting',[],['success'=>$storage_result]));
 	}
 	
 

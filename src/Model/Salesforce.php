@@ -11,7 +11,8 @@ class SforceExecutor {
   public $wsdl;
   private $assignment_rule_id;
   private $email_header_id;
-  private $oauth_endpoint;
+  public $oauth_authorize_url;
+  public $oauth_token_url;
   private $consumer_key;
   private $consumer_secret;
   private $redirect_uri;

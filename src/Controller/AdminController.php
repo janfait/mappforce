@@ -202,7 +202,7 @@ class AdminController extends Controller
 		$cep_group_attributes = $this->mapp_client->getGroupAttributeDefinitions();
 
 		//collect fields from Salesforce
-		if(!empty($this->sfdc_session)){
+		if($this->sfdc_session){
 			$sfdc_campaign = $this->sfdc_client->describeSObject('Campaign');
 			$sfdc_campaign_fields = $this->container->Sforce->getObjectFields($sfdc_campaign);
 			$sfdc_lead = $this->sfdc_client->describeSObject('Lead');

@@ -20,6 +20,7 @@ abstract class Controller
 	public $sfdc_session;
 	public $sfdc_settings;
 	public $sfdc_oauth_client;
+	public $oauth;
 	protected $mapp_client;
 	public $identifiers;
     /**
@@ -34,47 +35,137 @@ abstract class Controller
 		$this->settings = $container->settings;
 		$this->mapp_client = $container->mappCep;
 		$this->identifiers = array("email"=>"Email","identifier"=>"Id");
-		$this->sfdc_collect_oauth_settings();
-		$this->sfdc_login();	
+		$this->oauth = true;	
     }
 	
-	
-	public function sfdc_collect_oauth_settings()
+    /**
+     * Builds an array of settings collected from the database depending on oauth property
+     *
+     * @param none
+     * @return none
+     */
+	public function _sfdc_collect_settings()
 	{
-		//collect sfdc settings from database
-		$sfdc_settings = array();
-		$sfdc_settings['consumer_key'] = Setting::where('name','sfdc_consumer_key')->first()->value;
-		$sfdc_settings['consumer_secret'] = Setting::where('name','sfdc_consumer_secret')->first()->value;
-		$sfdc_settings['redirect_uri'] = Setting::where('name','sfdc_redirect_uri')->first()->value;
-		
-		if(empty($sfdc_settings['consumer_key']) | empty($sfdc_settings['consumer_secret']) | empty($sfdc_settings['redirect_uri'])){
-			$this->sfdc_settings = null;
-			$this->sfdc_oauth_client = null;
-		}else{
-			$sfdc_settings['consumer_secret'] = $this->_decrypt($sfdc_settings['consumer_secret'],$this->settings['secret']);
-			$sfdc_settings['consumer_key'] = $this->_decrypt($sfdc_settings['consumer_key'],$this->settings['secret']);
-			$this->sfdc_settings = $sfdc_settings;
-			//define provider
-			$this->sfdc_oauth_client = new SalesforceOauth([
-				'clientId'=> $this->sfdc_settings['consumer_key'],
-				'clientSecret'=> $this->sfdc_settings['consumer_secret'],
-				'redirectUri'=> $this->sfdc_settings['redirect_uri']
-			]);
+		//collect data
+		$settings = Setting::where('realm','sfdc')->get();
+		$_settings = array();
+		//decrypt
+		foreach($settings as $setting){
+			//decrypt all non-empty password types with the supplied secret
+			if($setting->type=='password' && !empty($setting->value)){
+				$_settings[$setting->name] =  $this->_decrypt($setting->value,$this->settings['secret']);
+			}else{
+				$_settings[$setting->name] =  $setting->value;
+			}
+		}
+		//store into property
+		$this->sfdc_settings = $_settings;
+		//define provider
+		$this->sfdc_oauth_client = new SalesforceOauth([
+			'clientId'=> $this->sfdc_settings['sfdc_consumer_key'],
+			'clientSecret'=> $this->sfdc_settings['sfdc_consumer_secret'],
+			'redirectUri'=> $this->sfdc_settings['sfdc_redirect_uri']
+		]);
 			
-		}	
+	}
+	
+	
+	public function _sfdc_check_settings()
+	{
+		//pass the sfdc settings property
+		$s = $this->sfdc_settings;
+		//if using the oauth flow
+		if($this->oauth){
+			//check presence of access token and its validity
+			if(!empty($s['sfdc_access_token']) && !empty($s['sfdc_refresh_token']) && !empty($s['sfdc_access_token_expires_at'])){
+				return true;
+			}
+			return false;
+			
+		}else{
+			//check presence of username, password and security token
+			if(!empty($s['sfdc_username']) && !empty($s['sfdc_password']) && !empty($s['sfdc_security_token'])){
+				return true;
+			}
+			return false;
+		}
+		
+	}
+	
+	public function _sfdc_check_authorization_settings(){
+		//pass the sfdc settings property
+		$s = $this->sfdc_settings;
+		//check that authorization settings are defined
+		if(!empty($s['sfdc_consumer_key']) && !empty($s['sfdc_consumer_secret']) && !empty($s['sfdc_redirect_uri'])){
+			return true;
+		}
+		return false;
+	}
+	
+	public function _sfdc_validate_access_token(){
+		//check token expiry
+		$expiry = $this->sfdc_settings['sfdc_access_token_expires_at'];
+		if (time() > intval($expiry)){
+			//use refresh token to obtain a new access token
+			$refresh_token = $this->_sfdc_refresh_token();
+			//if request fails
+			if($refresh_token['error']){
+				return false;
+			}
+			$this->_sfdc_store_oauth_token($refresh_token);
+		}
+		return true;
+		
+	}
+	
+	public function _sfdc_store_oauth_token($token){
+		//define mapping between what is supplied by SFDC and how it enters database
+		$map = array(
+			'access_token'=>'sfdc_access_token',
+			'refresh_token'=>'sfdc_refresh_token',
+			'issued_at'=>'sfdc_access_token_expires_at',
+			'id'=>'sfdc_server_url'
+		);
+		//if token contains an error node
+		if(array_key_exists('error',$token)){
+			return false;
+		}
+		//loop throught the map 
+		foreach($map as $key=>$v){
+			//if key exists in supplied token
+			if(array_key_exists($key,$token)){
+				//look up a db setting of the same name
+				$setting = Setting::where('name',$v)->first();
+				//transformation for expiry
+				if($key=='issued_at'){
+					$value = strtotime('+30 minutes',$token[$key]);
+				}else{
+					$value = $token[$key];
+				}
+				if($setting->type == 'password'){
+					$setting->value = $this->_encrypt($value,$this->settings['secret']);	
+				}else{
+					$setting->value = $value;
+				}
+				//store
+				$setting->save();
+			}
+		}
+		
+		return true;
+		
 	}
 	
 	public function _sfdc_collect_oauth_token($code){
-		
-		$this->sfdc_collect_oauth_settings();
-		
-		$token_url = "https://login.salesforce.com/services/oauth2/token";
+		//collect settings due to a redirect between MappForce and authorization url
+		$this->_sfdc_collect_settings();
+		//define the POST parameters
 		$params = "code=" . $code
 		   . "&grant_type=authorization_code"
-		   . "&client_id=" . $this->sfdc_settings['consumer_key']
-		   . "&client_secret=" . $this->sfdc_settings['consumer_secret']
-		   . "&redirect_uri=" . urlencode($this->sfdc_settings['redirect_uri']);
-		$curl = curl_init($token_url);
+		   . "&client_id=" . $this->sfdc_settings['sfdc_consumer_key']
+		   . "&client_secret=" . $this->sfdc_settings['sfdc_consumer_secret']
+		   . "&redirect_uri=" . urlencode($this->sfdc_settings['sfdc_redirect_uri']);
+		$curl = curl_init($this->container->Sforce->oauth_token_url);
 		curl_setopt($curl, CURLOPT_HEADER, false);
 		curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, false);
 		curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
@@ -83,145 +174,118 @@ abstract class Controller
 		curl_setopt($curl, CURLOPT_POSTFIELDS, $params);
 		$json_response = curl_exec($curl);
 		$status = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-		if ( $status != 200 ) {
-		   die("Error: call to token URL $token_url failed with status $status, request $params and response $json_response, curl_error " . curl_error($curl) . ", curl_errno " . curl_errno($curl));
-		}
 		curl_close($curl);
-		$response = json_decode($json_response, true);
-		$access_token = $response['access_token'];
-		$instance_url = $response['instance_url'];
-		if (!isset($access_token) || $access_token == "") {
-		   die("Error - access token missing from response!");
-		}
-		if (!isset($instance_url) || $instance_url == "") {
-		   die("Error - instance URL missing from response!");
+		
+		if ( $status != 200 ) {
+		  $error = json_decode($json_response, true);
+		  $response = array('error'=>true,'http_code'=>$status,'error_message'=>$error['error_description']); 
+		}else{
+		  $response = json_decode($json_response, true);
 		}
 		
 		return $response;
-		
-		
+			
 	}
 	
-	public function sfdc_collect_oauth_token($code){
-		try {
-			// Try to get an access token using the authorization code grant.
-			$accessToken = $this->sfdc_oauth_client->getAccessToken('authorization_code', [
-				'code' => $code
-			]);
-			$oauth_token = array();
-			$oauth_token['access_token'] = $accessToken->getToken();
-			$oauth_token['refresh_token'] = $accessToken->getRefreshToken();
-			$oauth_token['expiration_date'] = $accessToken->getExpires();
-			$oauth_token['expired'] = $accessToken->hasExpired();
-			
-			return $oauth_token;
-			
-		} catch (\League\OAuth2\Client\Provider\Exception\IdentityProviderException $e) {
-			return null;
-		}
-	
-	}
-	
-	public function sfdc_collect_identity($id){
+	public function _sfdc_refresh_token(){
+		//define the POST parameters
+		$params = "grant_type=refresh_token"
+		   . "&client_id=" . $this->sfdc_settings['sfdc_consumer_key']
+		   . "&client_secret=" . $this->sfdc_settings['sfdc_consumer_secret']
+		   . "&refresh_token=" . $this->sfdc_settings['sfdc_refresh_token'];
+		$curl = curl_init($this->container->Sforce->oauth_token_url);
 		
-		$curl = curl_init($id);
 		curl_setopt($curl, CURLOPT_HEADER, false);
 		curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, false);
 		curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
 		curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt($curl, CURLOPT_POST, true);
+		curl_setopt($curl, CURLOPT_POSTFIELDS, $params);
 		$json_response = curl_exec($curl);
 		$status = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-		if ( $status != 200 ) {
-		   die("Error: call to token URL $id failed with status $status and response $json_response, curl_error " . curl_error($curl) . ", curl_errno " . curl_errno($curl));
-		}
 		curl_close($curl);
-		$response = json_decode($json_response, true);
+		
+		if ( $status != 200 ) {
+		  $error = json_decode($json_response, true);
+		  $response = array('error'=>true,'http_code'=>$status,'error_message'=>$error['error_description']); 
+		}else{
+		  $response = json_decode($json_response, true);
+		}
 		return $response;
 	}
 	
-	public function sfdc_collect_authentication($oauth=false)
-	{
-		//collect sfdc settings from database
-		$sfdc_settings = array();
+	public function _sfdc_collect_identity($id){
+		//id parameter is a identity url
+		$curl = curl_init($id);
+		//place the oauth access token with to the authentication header
+		$h = array();
+		$h[] = 'Content-length: 0';
+		$h[] = 'Content-type: application/json';
+		$h[] = 'Authorization: OAuth '.$this->sfdc_settings['sfdc_access_token'];
 		
-		if(!$oauth){
-			
-			$sfdc_settings['username'] = Setting::where('name','sfdc_username')->first()->value;
-			$sfdc_settings['token'] = Setting::where('name','sfdc_security_token')->first()->value;
-			$sfdc_settings['password'] = Setting::where('name','sfdc_password')->first()->value;
-			if(empty($sfdc_settings['username']) | empty($sfdc_settings['password']) | empty($sfdc_settings['token'])){
-				$sfdc_settings = null;
-			}else{
-				$sfdc_settings['password'] = $this->_decrypt($sfdc_settings['password'],$this->settings['secret']);
-				$sfdc_settings['token'] = $this->_decrypt($sfdc_settings['token'],$this->settings['secret']);	
-			}
+		curl_setopt($curl, CURLOPT_HEADER, false);
+		curl_setopt($curl, CURLOPT_HTTPHEADER,$h);
+		curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, false);
+		curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
+		curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+		
+		$json_response = curl_exec($curl);
+		$status = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+		curl_close($curl);
+		
+		if ( $status != 200 ) {
+		  $error = json_decode($json_response, true);
+		  $response = array('error'=>true,'http_code'=>$status,'error_message'=>$error['error_description']);
 		}else{
-			
-			$sfdc_settings['access_token'] = Setting::where('name','sfdc_access_token')->first()->value;
-			$sfdc_settings['server_url'] = Setting::where('name','sfdc_server_url')->first()->value;
-			if(empty($sfdc_settings['access_token']) | empty($sfdc_settings['server_url'])){
-				$sfdc_settings = null;
-			}else{
-				
-				//refresh if expired
-				
-				//store into settings
-				$sfdc_settings['access_token'] = $this->_decrypt($sfdc_settings['access_token'],$this->settings['secret']);
-				$sfdc_settings['server_url'] = $this->_decrypt($sfdc_settings['server_url'],$this->settings['secret']);	
-			}
-			
+		   $response = json_decode($json_response, true);	
 		}
-		//add to property
-		$this->sfdc_settings = $sfdc_settings;
 		
-
-		
+		return $response;
 	}
 	
-	public function sfdc_login($oauth=false)
+
+	
+	public function sfdc_login()
 	{
-		//create sfdc connection
+		//create default session flag
+		$this->sfdc_session = false;
+		//initialize client
 		$this->sfdc_client = $this->container->SforceClient;
+		//create wsdl connection
 		$this->sfdc_connection = $this->sfdc_client->createConnection(
 			$this->container->Sforce->wsdl,null,array('exceptions'=>true,'trace'=>false)
 		);
-		
-		//collect settings from database depending on the oauth parameter
-		$this->sfdc_collect_authentication($oauth);
-		if(is_null($this->sfdc_settings)){
-			$this->sfdc_session = null;	
-		}
+		//collect the settings from database
+		$this->_sfdc_collect_settings();
 		//if oauth method not applies
-		if(!$oauth){
-
-			//use the password flow
-			try{
-				//try to login in create sfdc session
-				$this->sfdc_session = $this->sfdc_client->login(
-					$this->sfdc_settings['username'],
-					$this->sfdc_settings['password'].$this->sfdc_settings['token']
-				);
-			}
-			catch(\Exception $e){
-				$this->sfdc_session = null;
-			}
-			
+		if(!$this->oauth){
+			//try to login in create sfdc session
+			$this->sfdc_session = $this->sfdc_client->login(
+				$this->sfdc_settings['sfdc_username'],
+				$this->sfdc_settings['sfdc_password'].$this->sfdc_settings['sfdc_security_token']
+			);
 		}else{
-			//use the oauth flow
-			try{
-				
-				$sfdc_identity = $this->sfdc_collect_identity($this->sfdc_settings['server_url']);
-				$api_server = $sfdc_identity['urls']['partner'];
-				//attach session ID and endpoint to the client, bypassing the login method
-				$this->sfdc_client->setEndpoint();
-				$this->sfdc_client->setSessionHeader($this->sfdc_settings['access_token']);
-				
+			//if required sfdc settings are not populated
+			if($this->_sfdc_check_settings()){				
+				//if access token expired, request new one through a refresh token
+				$this->_sfdc_validate_access_token();
+				//call the identity service to retrieve api server url
+				$sfdc_identity = $this->_sfdc_collect_identity($this->sfdc_settings['sfdc_server_url']);
+				//if sfdc identity suceeds
+				if(!isset($sfdc_identity['error'])){
+					//collect the returned api server url
+					$sfdc_api_server = $sfdc_identity['urls']['partner'];
+					//attach session ID and endpoint to the client directly, bypassing the login method
+					$this->sfdc_client->setEndpoint($sfdc_api_server);
+					$this->sfdc_client->setSessionHeader($this->sfdc_settings['sfdc_access_token']);
+					$this->sfdc_session = true;
+				}
+
 			}
-			catch(\Exception $e){
-				$this->sfdc_session = null;
-			}
-			
+				
 		}
+		
+		return $this->sfdc_session;
 
 	}
 	
