@@ -228,7 +228,7 @@ $('#generate_json_map').submit(function (e) {
 (function ($) {
     $.toggleShowPassword = function (options) {
         var settings = $.extend({
-            field: "#password",
+            field: "input[type='password']",
             control: ".toggle-show-password",
         }, options);
 

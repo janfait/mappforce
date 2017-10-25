@@ -19,7 +19,9 @@ class AdminController extends Controller
 /////////////////////////////////////////////////////////////////////////////////////	
 	public function logout(Request $request, Response $response, $args)
 	{
-		
+		$this->sfdc_client->invalidateSessions();
+		$this->sfdc_client = null;
+
 		session_start();
 		session_unset();
 		session_destroy();
@@ -97,12 +99,6 @@ class AdminController extends Controller
 			'success_message'=>null
 		);
 		
-		$tiles = array(
-			'lead_mapping'=>0,
-			'contact_mapping'=>0,
-			'campaign_mapping'=>0,
-			'settings'=>false,
-		);
 		//collect the number of stored mappings
 		$lead_standard_mapping = Mapping::where(['sfdc_object'=>'lead','cep_attr_type'=>'standard'])->count();
 		$lead_custom_mapping = Mapping::where(['sfdc_object'=>'lead','cep_attr_type'=>'custom'])->count();
@@ -118,13 +114,6 @@ class AdminController extends Controller
 			'campaign'=>$campaign_mapping,
 			'settings'=>false,
 		);
-		
-		
-		//check number of settings
-		if($settings==3){
-			$tiles['settings'] = true;
-		}
-		
 
 		$body = $this->view->fetch('admin/pages/homepage.twig', [
 			'user' =>  $request->getAttribute('user'),
@@ -181,9 +170,8 @@ class AdminController extends Controller
 		
 		$status = array(
 			'error'=>false,
-			'error_message'=>null,
-			'success'=>false,
-			'success_message'=>null
+			'message'=>null,
+			'success'=>false
 		);
 
 		//populate mapp client from session
@@ -211,7 +199,7 @@ class AdminController extends Controller
 			$sfdc_contact_fields = $this->container->Sforce->getObjectFields($sfdc_contact);
 		}else{
 			$status['error'] = true;
-			$status['error_message'] = 'Failed to connect to Salesforce. Please set or review your credentials in Settings section.';
+			$status['message'] = 'Failed to connect to Salesforce. Please set or review your credentials in Settings section.';
 			$sfdc_campaign_fields = array();
 			$sfdc_lead_fields = array();
 			$sfdc_contact_fields = array();
@@ -269,9 +257,8 @@ class AdminController extends Controller
 			'sfdc_contact_fields' => $sfdc_contact_fields,
 			'user' =>  $request->getAttribute('user'),
 			'error' => $status['error'],
-			'error_message'=>$status['error_message'],
+			'message'=>$status['message'],
 			'success' => $status['success'],
-			'success_message'=>$status['success_message'],
 			'debug' => $this->container->get('settings')['debug']
         ]);
 

@@ -33,8 +33,7 @@ namespace Mapp;
 	  public $groupAttributes = array(
 		array("name"=>"Email","type"=>"STRING"),
 		array("name"=>"Name","type"=>"STRING"),
-		array("name"=>"Identifier","type"=>"STRING"),
-		array("name"=>"Title","type"=>"NUMBER")
+		array("name"=>"Identifier","type"=>"STRING")
 	  );
 	  
       //constructor

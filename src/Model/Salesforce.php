@@ -81,7 +81,8 @@ class SforceExecutor {
 				'name'=>$field->name,
 				'type'=>$field->type,
 				'restricted'=>$field->restrictedPicklist,
-				'required'=>!$field->nillable
+				'required'=>!$field->nillable,
+				'hasdefault'=>$field->defaultedOnCreate
 			);
 			array_push($sfdc_fields,$reduced_field);
 		}

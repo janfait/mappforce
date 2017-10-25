@@ -1,7 +1,7 @@
 {
-    "name": "Mapp Integrator",
-    "description": "Mapp Integrator is an environement to set up custom events between Mapp CEP and other platforms, builds heavily on napolux/helloslim3",
-    "keywords": ["slimframework", "sfdc", "twig","eloquent", "mapp"],
+    "name": "MappForce",
+    "description": "MappForce is a middleware application which allows one-way integration between Mapp CEP and Salesforce marketing platforms by packaging common use cases as restful API methods with basic authentication. Builds heavily on napolux/helloslim3",
+    "keywords": ["slimframework", "sfdc", "twig","eloquent", "mapp","salesforce","cep","integration","mappforce"],
     "homepage": "https://github.com/janfait",
     "license": "MIT",
     "authors": [

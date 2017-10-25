@@ -53,11 +53,9 @@ $app->group('/api', function() {
 	
 	//status check
 	$this->get('/status', 'MappIntegrator\Controller\ApiController:status');
-	
 	//root node
 	$this->get('', 'MappIntegrator\Controller\ApiController:root');
 	$this->get('/', 'MappIntegrator\Controller\ApiController:root');
-	
 	//mapping
 	$this->get('/mapping', 'MappIntegrator\Controller\ApiController:mappingGetAll');
 	//settings
@@ -75,18 +73,26 @@ $app->group('/api', function() {
 	// SFDC GROUP
 	///////////////////////////////////////////////////////////
 	$this->group('/sfdc', function() {
+		//identity
+		$this->get('/id', 'MappIntegrator\Controller\ApiController:sfdcIdentity');
 		//describe the current user
 		$this->get('/user', 'MappIntegrator\Controller\ApiController:sfdcUser');
 		//run a query
 		$this->get('/query', 'MappIntegrator\Controller\ApiController:sfdcQuery');
-		//upsert any object
-		$this->post('/upsert', 'MappIntegrator\Controller\ApiController:sfdcUpsert');
+		//run a query
+		$this->get('/search', 'MappIntegrator\Controller\ApiController:sfdcSearch');
+		//test
+		$this->get('/test', 'MappIntegrator\Controller\ApiController:sfdcTest');
 		//describe the defined object
 		$this->get('/{object}/describe', 'MappIntegrator\Controller\ApiController:sfdcObject');
 		//describe the defined object fields
 		$this->get('/{object}/fields', 'MappIntegrator\Controller\ApiController:sfdcObjectFields');
+		//map
+		$this->post('/{object}/map', 'MappIntegrator\Controller\ApiController:sfdcMap');
 		//upsert the defined object
 		$this->post('/{object}/upsert', 'MappIntegrator\Controller\ApiController:sfdcUpsert');
+		//create a defined object
+		$this->post('/{object}/create', 'MappIntegrator\Controller\ApiController:sfdcCreate');
 	});
 
 })->add( new MappApiAuthenticator($container));

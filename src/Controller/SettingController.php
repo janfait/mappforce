@@ -72,6 +72,16 @@ class SettingController extends Controller
 
 	public function get(Request $request, Response $response, $args){
 
+	
+		$status = array(
+			'error'=>false,
+			'error_message'=>null,
+			'success'=>false,
+			'message'=>null
+		);
+		//collect query
+		$query = $request->getQueryParams();
+	
 		//collect settings
 		$cep_settings = Setting::where([['realm','cep'],['editable',true]])->get();
 		$sfdc_settings = Setting::where([['realm','sfdc'],['editable',true]])->get();
@@ -84,15 +94,22 @@ class SettingController extends Controller
 			}
 		}
 		
+		//collect success messages from oauth attempt
+		if(isset($query['success'])){
+			$status['error'] = boolval($query['success']);
+			$status['message'] = $query['error_message'];
+			$status['success'] = !$status['error'];
+		}
+
+		//render
 		$body = $this->view->fetch('admin/pages/settings.twig', [
 			'cep_settings'=> $cep_settings,
 			'sfdc_settings'=> $sfdc_settings,
 			'global_settings'=> $global_settings,
 			'user' =>  $request->getAttribute('user'),
-			'error' => false,
-			'error_message'=>'',
-			'success' => false,
-			'success_message'=>'',
+			'error' => $status['error'],
+			'message'=>$status['message'],
+			'success' => $status['success'],
 			'debug' => $this->container->get('settings')['debug']
 		]);
 		

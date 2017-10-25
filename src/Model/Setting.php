@@ -116,9 +116,22 @@ class SettingsDictionary {
 			'editable'=>true,
 			'picklist'=>null
 		),
+		'sfdc_use_oauth'=>array(
+			'realm'=>'sfdc',
+			'category'=>'authentication',
+			'name'=>'sfdc_authentication_method',
+			'required'=>true,
+			'value'=>true,
+			'label'=>'Use OAuth authentication flow',
+			'icon'=>'security',
+			'description'=>'If selected, OAuth flow is used for authentication. Otherwise, user-password flow is used (not recommended) ',
+			'type'=>'checkbox',
+			'editable'=>true,
+			'picklist'=>null
+		),
 		'sfdc_username'=>array(
 			'realm'=>'sfdc',
-			'category'=>'main',
+			'category'=>'authentication',
 			'name'=>'sfdc_username',
 			'required'=>false,
 			'value'=>'',
@@ -131,7 +144,7 @@ class SettingsDictionary {
 		),
 		'sfdc_password'=>array(
 			'realm'=>'sfdc',
-			'category'=>'main',
+			'category'=>'authentication',
 			'name'=>'sfdc_password',
 			'required'=>false,
 			'value'=>'',
@@ -144,7 +157,7 @@ class SettingsDictionary {
 		),
 		'sfdc_security_token'=>array(
 			'realm'=>'sfdc',
-			'category'=>'main',
+			'category'=>'authentication',
 			'name'=>'sfdc_security_token',
 			'required'=>false,
 			'value'=>'',
@@ -157,7 +170,7 @@ class SettingsDictionary {
 		),
 		'sfdc_redirect_uri'=>array(
 			'realm'=>'sfdc',
-			'category'=>'main',
+			'category'=>'authentication',
 			'name'=>'sfdc_redirect_uri',
 			'required'=>false,
 			'value'=>'',
@@ -170,7 +183,7 @@ class SettingsDictionary {
 		),
 		'sfdc_consumer_secret'=>array(
 			'realm'=>'sfdc',
-			'category'=>'main',
+			'category'=>'authentication',
 			'name'=>'sfdc_consumer_secret',
 			'required'=>false,
 			'value'=>'',
@@ -183,7 +196,7 @@ class SettingsDictionary {
 		),
 		'sfdc_consumer_key'=>array(
 			'realm'=>'sfdc',
-			'category'=>'main',
+			'category'=>'authentication',
 			'name'=>'sfdc_consumer_key',
 			'required'=>false,
 			'value'=>'',
@@ -196,7 +209,7 @@ class SettingsDictionary {
 		),
 		'sfdc_access_token'=>array(
 			'realm'=>'sfdc',
-			'category'=>'main',
+			'category'=>'authentication',
 			'name'=>'sfdc_access_token',
 			'required'=>false,
 			'value'=>'',
@@ -209,7 +222,7 @@ class SettingsDictionary {
 		),
 		'sfdc_access_token_expires_at'=>array(
 			'realm'=>'sfdc',
-			'category'=>'main',
+			'category'=>'authentication',
 			'name'=>'sfdc_access_token_expires_at',
 			'required'=>false,
 			'value'=>'',
@@ -222,7 +235,7 @@ class SettingsDictionary {
 		),
 		'sfdc_refresh_token'=>array(
 			'realm'=>'sfdc',
-			'category'=>'main',
+			'category'=>'authentication',
 			'name'=>'sfdc_refresh_token',
 			'required'=>false,
 			'value'=>'',
@@ -235,7 +248,7 @@ class SettingsDictionary {
 		),
 		'sfdc_server_url'=>array(
 			'realm'=>'sfdc',
-			'category'=>'main',
+			'category'=>'authentication',
 			'name'=>'sfdc_server_url',
 			'required'=>false,
 			'value'=>'',
@@ -319,7 +332,33 @@ class SettingsDictionary {
 			'value'=>'Responded',
 			'label'=>'Default Campaign Member Status',
 			'icon'=>'group_add',
-			'description'=>'If specified, upon creation of the Campaign Member, this status will be assigned. Please note the status needs to be available in your campaign',
+			'description'=>'If specified, upon creation of a new Campaign Member, this status will be assigned. Please note the status needs to be available in your campaign',
+			'type'=>'text',
+			'editable'=>true,
+			'picklist'=>null
+		),
+		'lead_source_default'=>array(
+			'realm'=>'sfdc',
+			'category'=>'main',
+			'name'=>'lead_source_default',
+			'required'=>false,
+			'value'=>'',
+			'label'=>'Default Lead Source',
+			'icon'=>'group_add',
+			'description'=>'Applied at creation of the a new Lead, unless a Lead Source field is specified',
+			'type'=>'text',
+			'editable'=>true,
+			'picklist'=>null
+		),
+		'campaign_type_default'=>array(
+			'realm'=>'sfdc',
+			'category'=>'main',
+			'name'=>'campaign_type_default',
+			'required'=>false,
+			'value'=>'Responded',
+			'label'=>'Default Campaign Type',
+			'icon'=>'merge type',
+			'description'=>'If specified, upon creation of a new Campaign, this Type will be assigned.',
 			'type'=>'text',
 			'editable'=>true,
 			'picklist'=>null

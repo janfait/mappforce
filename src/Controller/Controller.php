@@ -15,6 +15,9 @@ abstract class Controller
     /** @var TwigViews view */
     protected $view;
 	public $container;
+	public $call_stack;
+	public $response_stack;
+	public $call_time;
 	public $sfdc_client;
 	public $sfdc_connection;
 	public $sfdc_session;
@@ -35,7 +38,10 @@ abstract class Controller
 		$this->settings = $container->settings;
 		$this->mapp_client = $container->mappCep;
 		$this->identifiers = array("email"=>"Email","identifier"=>"Id");
-		$this->oauth = true;	
+		$this->oauth = true;
+		$this->call_stack = array();
+		$this->response_stack = array();
+		$this->sfdc_login();
     }
 	
     /**
@@ -46,6 +52,8 @@ abstract class Controller
      */
 	public function _sfdc_collect_settings()
 	{
+		
+		$this->call_stack[] = __FUNCTION__ ;
 		//collect data
 		$settings = Setting::where('realm','sfdc')->get();
 		$_settings = array();
@@ -72,6 +80,7 @@ abstract class Controller
 	
 	public function _sfdc_check_settings()
 	{
+		$this->call_stack[] = __FUNCTION__ ;
 		//pass the sfdc settings property
 		$s = $this->sfdc_settings;
 		//if using the oauth flow
@@ -92,7 +101,10 @@ abstract class Controller
 		
 	}
 	
-	public function _sfdc_check_authorization_settings(){
+	public function _sfdc_check_authorization_settings()
+	{
+		
+		$this->call_stack[] = __FUNCTION__ ;
 		//pass the sfdc settings property
 		$s = $this->sfdc_settings;
 		//check that authorization settings are defined
@@ -102,23 +114,29 @@ abstract class Controller
 		return false;
 	}
 	
-	public function _sfdc_validate_access_token(){
+	public function _sfdc_validate_access_token()
+	{
+		
+		$this->call_stack[] = __FUNCTION__ ;
 		//check token expiry
 		$expiry = $this->sfdc_settings['sfdc_access_token_expires_at'];
 		if (time() > intval($expiry)){
 			//use refresh token to obtain a new access token
 			$refresh_token = $this->_sfdc_refresh_token();
 			//if request fails
-			if($refresh_token['error']){
+			if(isset($refresh_token['error'])){
 				return false;
 			}
-			$this->_sfdc_store_oauth_token($refresh_token);
+			$this->response_stack[] = array(__FUNCTION__=>$this->_sfdc_store_oauth_token($refresh_token));
 		}
 		return true;
 		
 	}
 	
-	public function _sfdc_store_oauth_token($token){
+	private function _sfdc_store_oauth_token($token)
+	{
+		
+		$this->call_stack[] = __FUNCTION__ ;
 		//define mapping between what is supplied by SFDC and how it enters database
 		$map = array(
 			'access_token'=>'sfdc_access_token',
@@ -138,7 +156,7 @@ abstract class Controller
 				$setting = Setting::where('name',$v)->first();
 				//transformation for expiry
 				if($key=='issued_at'){
-					$value = strtotime('+30 minutes',$token[$key]);
+					$value = strtotime('+25 minutes',time());
 				}else{
 					$value = $token[$key];
 				}
@@ -151,12 +169,15 @@ abstract class Controller
 				$setting->save();
 			}
 		}
-		
+		$this->response_stack[] = array(__FUNCTION__=>true);
 		return true;
 		
 	}
 	
-	public function _sfdc_collect_oauth_token($code){
+	public function _sfdc_collect_oauth_token($code)
+	{
+		
+		$this->call_stack[] = __FUNCTION__ ;
 		//collect settings due to a redirect between MappForce and authorization url
 		$this->_sfdc_collect_settings();
 		//define the POST parameters
@@ -182,12 +203,15 @@ abstract class Controller
 		}else{
 		  $response = json_decode($json_response, true);
 		}
-		
+		$this->response_stack[] = array(__FUNCTION__=>$response);
 		return $response;
 			
 	}
 	
-	public function _sfdc_refresh_token(){
+	public function _sfdc_refresh_token()
+	{
+		
+		$this->call_stack[] = __FUNCTION__ ;
 		//define the POST parameters
 		$params = "grant_type=refresh_token"
 		   . "&client_id=" . $this->sfdc_settings['sfdc_consumer_key']
@@ -211,10 +235,14 @@ abstract class Controller
 		}else{
 		  $response = json_decode($json_response, true);
 		}
+		$this->response_stack[] = array(__FUNCTION__=>$response);
 		return $response;
 	}
 	
-	public function _sfdc_collect_identity($id){
+	public function _sfdc_collect_identity($id)
+	{
+		
+		$this->call_stack[] = __FUNCTION__ ;
 		//id parameter is a identity url
 		$curl = curl_init($id);
 		//place the oauth access token with to the authentication header
@@ -237,9 +265,9 @@ abstract class Controller
 		  $error = json_decode($json_response, true);
 		  $response = array('error'=>true,'http_code'=>$status,'error_message'=>$error['error_description']);
 		}else{
-		   $response = json_decode($json_response, true);	
+		  $response = json_decode($json_response, true);	
 		}
-		
+		$this->response_stack[] = array(__FUNCTION__=>$response);
 		return $response;
 	}
 	
@@ -247,6 +275,8 @@ abstract class Controller
 	
 	public function sfdc_login()
 	{
+		
+		$this->call_stack[] = __FUNCTION__ ;
 		//create default session flag
 		$this->sfdc_session = false;
 		//initialize client
@@ -275,6 +305,7 @@ abstract class Controller
 				if(!isset($sfdc_identity['error'])){
 					//collect the returned api server url
 					$sfdc_api_server = $sfdc_identity['urls']['partner'];
+					$sfdc_api_server = str_replace("{version}","latest",$sfdc_api_server);
 					//attach session ID and endpoint to the client directly, bypassing the login method
 					$this->sfdc_client->setEndpoint($sfdc_api_server);
 					$this->sfdc_client->setSessionHeader($this->sfdc_settings['sfdc_access_token']);
@@ -284,7 +315,7 @@ abstract class Controller
 			}
 				
 		}
-		
+		$this->response_stack[] = array(__FUNCTION__=>$this->sfdc_session);
 		return $this->sfdc_session;
 
 	}

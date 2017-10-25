@@ -63,13 +63,13 @@
 									{% if error %}
 										<div class="mdl-components__warning">
 											<b>Error:</b>
-											{{error_message}}
+											{{message}}
 										</div>
 									{% endif %}
 									
 									{% if success %}
 										<div class="mdl-components__success">
-											{{success_message}}
+											{{message}}
 										</div>
 									{% endif %}
 									<hr>
@@ -97,6 +97,7 @@
 						{# -------------------------------------------------------------------------------- #}
 					
 						<table id="mapping_lead_standard_table" class="hide-on-start mdl-data-table mdl-js-data-table mdl-data-table--sortable mdl-shadow--2dp fullwidth" style="margin-left: auto; margin-right: auto; width: 100%;">
+							{# ------------Table Head--------------- #}
 							<thead>
 								<tr>
 									<th class="mdl-data-table__cell--non-numeric">Include
@@ -147,20 +148,29 @@
 										<select id="sfdc_name_for_{{ cep_standard_attribute.name|lower }}" name="sfdc_name">
 											<option value="">-</option>
 											{% for sfdc_lead_field in sfdc_lead_fields|sort %}
-												<option value="{{sfdc_lead_field.name}}" {% if sfdc_lead_field.name==cep_standard_attribute.lead %} selected {% endif %}>{{sfdc_lead_field.label}}</option>
+												<option 
+													class="{% if sfdc_lead_field.required and not sfdc_lead_field.hasdefault %} sfdc_required {% endif %} {% if sfdc_lead_field.restricted %} sfdc_restricted {% endif %}" 
+													value="{{sfdc_lead_field.name}}" {% if sfdc_lead_field.name==cep_standard_attribute.lead %} selected {% endif %}>
+													{{sfdc_lead_field.label}}
+												</option>
 											{% endfor %}
 										</select>
 									</td>
 									
-									<td class="mdl-data-table__cell--non-numeric cep_type"> - </td>
+									<td class="mdl-data-table__cell--non-numeric sfdc_type"> - </td>
 								</tr>
 							{% endfor %}
 							</tbody>
 						</table>
+						
+						{# -------------------------------------------------------------------------------- #}
+						{# -------------------------------END Leads Standard Table -------------------------#}
+						{# -------------------------------------------------------------------------------- #}
+						
 					</form>		
 
 				{# -------------------------------------------------------------------------------- #}
-				{# -------------------------------END Leads Form------------------------------------#}
+				{# -------------------------------END Leads Standard Form---------------------------#}
 				{# -------------------------------------------------------------------------------- #}
 				
 				<br>
@@ -184,13 +194,13 @@
 									{% if error %}
 										<div class="mdl-components__warning">
 											<b>Error:</b>
-											{{error_message}}
+											{{message}}
 										</div>
 									{% endif %}
 									
 									{% if success %}
 										<div class="mdl-components__success">
-											{{success_message}}
+											{{message}}
 										</div>
 									{% endif %}
 									<hr>
@@ -265,23 +275,35 @@
 										<select id="sfdc_name_for_{{ cep_custom_attribute.name|lower }}" name="sfdc_name">
 											<option value="">-</option>
 											{% for sfdc_lead_field in sfdc_lead_fields|sort %}
-												<option value="{{sfdc_lead_field.name}}" {% if sfdc_lead_field.name==cep_custom_attribute.lead %} selected {% endif %}>{{sfdc_lead_field.label}}</option>
+												<option class="{% if sfdc_lead_field.required and not sfdc_lead_field.hasdefault %} sfdc_required {% endif %}" {% if sfdc_lead_field.name==cep_custom_attribute.lead %} selected {% endif %}>{{sfdc_lead_field.label}}</option>
 											{% endfor %}
 										</select>
 									</td>
 									
-									<td class="mdl-data-table__cell--non-numeric cep_type">{{ cep_custom_attribute.type }}</td>
+									<td class="mdl-data-table__cell--non-numeric sfdc_type"> - </td>
 								</tr>
 							{% endfor %}
 							</tbody>
 						</table>
+						
+						{# -------------------------------------------------------------------------------- #}
+						{# -------------------------------END Leads Custom Table ---------------------------#}
+						{# -------------------------------------------------------------------------------- #}
+						
+						
 					</form>	
 					
+					
+				{# -------------------------------------------------------------------------------- #}
+				{# -------------------------------END Leads Custom Form-----------------------------#}
+				{# -------------------------------------------------------------------------------- #}
+
 					<br>
 					
-					{# -------------------------------------------------------------------------------- #}
-					{# -------------------------------START Leads Member Table -------------------------#}
-					{# -------------------------------------------------------------------------------- #}
+				{# -------------------------------------------------------------------------------- #}
+				{# -------------------------------START Leads Member Form---------------------------#}
+				{# -------------------------------------------------------------------------------- #}
+
 					<form role="form" method="POST" action="{{base_url}}/mapping/create">
 					
 						<section class="section--center mdl-grid mdl-shadow--2dp white">
@@ -295,13 +317,13 @@
 									{% if error %}
 										<div class="mdl-components__warning">
 											<b>Error:</b>
-											{{error_message}}
+											{{message}}
 										</div>
 									{% endif %}
 									
 									{% if success %}
 										<div class="mdl-components__success">
-											{{success_message}}
+											{{message}}
 										</div>
 									{% endif %}
 									<hr>
@@ -353,7 +375,9 @@
 					
 				</div>
 			</section>
-			
+			{# -------------------------------------------------------------------------------- #}
+			{# -------------------------------END Leads Member Form---------------------------#}
+			{# -------------------------------------------------------------------------------- #}		
 			
 			<section class="mdl-layout__tab-panel" id="mapping-contacts">
 				<div class="ui-page-content">
@@ -394,13 +418,13 @@
 									{% if error %}
 										<div class="mdl-components__warning">
 											<b>Error:</b>
-											{{error_message}}
+											{{message}}
 										</div>
 									{% endif %}
 									
 									{% if success %}
 										<div class="mdl-components__success">
-											{{success_message}}
+											{{message}}
 										</div>
 									{% endif %}
 									<hr>

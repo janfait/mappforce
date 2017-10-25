@@ -11,7 +11,8 @@ class MappApiAuthenticator
     public function __invoke($request, $response, $next)
     {
 
-		$start_time = time();
+		//todo: timing of requests for api calls
+		$start_time = microtime();
 		$host = $request->getUri()->getHost();
         $scheme = $request->getUri()->getScheme();
         $server_params = $request->getServerParams();
@@ -19,6 +20,8 @@ class MappApiAuthenticator
         $user = false;
         $password = false;
 		$output = array("error" => true, "error_message"=>"Authentication failed");
+		
+		//todo: allow access controls
 
 		//collect instance and username
 		if (isset($server_params["PHP_AUTH_USER"])) {
@@ -71,7 +74,8 @@ class MappApiAuthenticator
 			return $response->withStatus(500)->withJson($output);
 		}
 
-        return $next($request, $response);
+        $response =  $next($request, $response);
+		return $response;
     }
 	
 }

@@ -17,7 +17,7 @@ class ApiController extends Controller
 	////////////////////////////////////////////////
 	// Root
 	////////////////////////////////////////////////
-	
+
     public function root(Request $request, Response $response, $args)
 	{
 		$output = array('error'=>false,'error_message'=>'','payload'=>'This is the API root','user'=>$request->getAttribute('user'));
@@ -40,10 +40,26 @@ class ApiController extends Controller
         return $response->withStatus($cep_response['httpCode'])->withJson($cep_response);
     }
 	
-	
 	////////////////////////////////////////////////
 	// SFDC specific endpoints
 	////////////////////////////////////////////////
+	
+	public function sfdcLogin(Request $request, Response $response, $args)
+	{
+		$output = array('error'=>false,'error_message'=>'','payload'=>'','user'=>$request->getAttribute('user'));
+		$output['payload'] = array('call_stack'=>$this->call_stack,'response_stack'=>$this->response_stack);
+        return $response->withJson($output);
+    }
+	
+	public function sfdcIdentity(Request $request, Response $response, $args)
+	{
+		$output = array('error'=>false,'error_message'=>'','payload'=>'','user'=>$request->getAttribute('user'));
+		$id = Setting::where('name','sfdc_server_url')->first();
+		$id = $this->_decrypt($id->value,$this->settings['secret']);
+		$id = $this->_sfdc_collect_identity($id);
+		$output['payload'] = $id;
+        return $response->withJson($output);
+    }
 	
 	public function sfdcUser(Request $request, Response $response, $args)
 	{
@@ -69,108 +85,7 @@ class ApiController extends Controller
         return $response->withStatus(200)->withJson($output);
 	}
 	
-	public function syncLastEdited(Request $request, Response $response, $args){
-		
-		$output = array('error'=>false,'error_message'=>'','payload'=>null,'user'=>$request->getAttribute('user'));
-		$object = $request->getAttribute('object');
-		$object = ucfirst(strtolower($object));
-	    //collect query parameters
-	    $query = $request->getQueryParams();
-
-		//check for the presence of the lookback query
-		if (array_key_exists('lookback',$query)){
-			//collect the lookback parameter
-			$lookback = $query['lookback'];
-			//collect the lookback unit
-			$lookbackUnits = $query['lookback_units'];
-			if(($lookbackMap[$lookbackUnits]*$lookback)>$lookbackMap['limit']){
-				$out['error'] = true;
-				$out['httpCode'] = 400;
-		    	$out['error_message'] = 'You are trying to query too much data';
-				return $response->withStatus($out['httpCode'])->withJson($out);	
-			}
-			//get current time
-		  	$currentTime = time();
-		  	//lookback by the number of seconds defined by lookback and lookback units
-		  	$startTime = $currentTime-($lookbackMap[$lookbackUnits]*$lookback);
-		  	//translate to the SOQL query format
-			$startTime = date("Y-m-d\TH:i:s", $startTime)."-07:00";
-		  	//define query
-		  	$out['searchQuery'] = "SELECT ".implode(",",$objectFields)." FROM ".$object." WHERE LastModifiedDate  >= ".$startTime;
-		  	//execute query
-		  	$searchQueryResult = $connection->query($out['searchQuery']);
-			//respond based on the number of records
-		  	if(count($searchQueryResult->records)>0 && count($searchQueryResult->records)<$lookbackMap['recordLimit']){
-		    	$searchQueryArray = array();
-		    	//create the records container
-		    	$searchQueryArray['records'] = array();
-		    	//loop through all records and collect allowed values
-		    	foreach ($searchQueryResult->records as $record) {
-		    		$searchQueryRecord = array();
-		    		foreach($record as $recordKey => $recordValue){
-		    			//place all allowed values to the searchQueryRecord object
-						if(in_array($recordKey,$objectFields)){
-							$searchQueryRecord[$recordKey]=$recordValue;
-						}
-						//if the record is present in mapping
-						if(!is_null($mapping[$object][$recordKey])){
-							//map according to supplied mapping
-							$newRecordKey = $mapping[$object][$recordKey];
-							//delete those that are mapped
-							unset($searchQueryRecord[$recordKey]);
-							//replace with new mapping
-							$searchQueryRecord[$newRecordKey]=$recordValue;
-						}else{
-							//delete those that are not mapped
-							unset($searchQueryRecord[$recordKey]);
-						}
-					}
-					//sync to dmc if it has email
-					if(!empty($searchQueryRecord['user.Email'])){
-						//sync data to dmc via DMC API 2.0
-						$serializedBody = dmcSerializeBody($searchQueryRecord);
-						$createCall = dmcCreateUser($searchQueryRecord['user.Email'],$serializedBody);
-					    if(dmcReturnsError($createCall)){
-					    	$updateCall = dmcUpdateUser($searchQueryRecord['user.Email'],$serializedBody);
-					    	if(dmcReturnsError($updateCall)){
-					    		$searchQueryRecord['syncSuccess'] = false;
-					    		$searchQueryRecord['syncResponse'] = $updateCall;
-					    	}else{
-					    		$searchQueryRecord['syncSuccess'] = true;
-					    		$searchQueryRecord['syncResponse'] = $updateCall;
-					    	}
-					    }else{
-					    	$searchQueryRecord['syncSuccess'] = true;
-					    	$searchQueryRecord['syncResponse'] = $createCall;
-					    }
-					}else{
-						$searchQueryRecord['syncSuccess'] = false;
-					}
-					//append the record as an array to the existing records and identify it via Id
-					$searchQueryArray['records'][count($searchQueryArray['records'])]=$searchQueryRecord;
-		    	}
-		    	//merge the standard output and the records array
-		    	$out = array_merge($out,$searchQueryArray);
-				return $response->withStatus($out['httpCode'])->withJson($out);	
-	    	}else{
-	    		$out['error'] = true;
-				$out['httpCode'] = 400;
-		    	$out['error_message'] = 'Your search -'.$out['searchQuery'].'- has returned '.count($searchQueryResult->records).' results.';
-				return $response->withStatus($out['httpCode'])->withJson($out);		
-	    	}
-
-		}else{
-			$out['error'] = true;
-			$out['httpCode'] = 400;
-    		$out['error_message'] = 'To get '.$object.' provide lookback(int) parameter in query string ';		
-		}
-		
-		
-		return $response->withStatus(200)->withJson($output);
-	}
-	
-	
-	public function _sfdcMap($object,$body,$mapping)
+	private function _sfdcMap($object,$body,$mapping)
 	{
 		//create fields array
 		$fields = [];		
@@ -207,6 +122,43 @@ class ApiController extends Controller
 		
 	}
 	
+	
+	public function sfdcTest(Request $request, Response $response,$args){
+			//create the sfdc record object
+
+			$createFields = array (
+				'FirstName' => 'test',
+				'LastName' => 'test',
+				'Phone' => '510-555-5555',
+				'Email' => 'test3213@test-domain.com',
+				'Company'=> 'test'
+			);
+			
+			$output = array();
+
+			$sObject = new \stdClass();
+			$sObject->type = 'Lead';
+			$sObject->fields = $createFields;
+
+			$sObject->fields['FirstName'] = 'test3213';
+			$sObject->fields['LastName'] = 'test3213';
+
+			$output[] = "Upserting Lead (existing)";
+			try{
+				$upsertResponse = $this->sfdc_client->upsert("Email", array ($sObject));
+				$output[] = $upsertResponse;
+			} catch (\Exception $e) {
+				
+				$output = $this->sfdc_client->getLastRequest();
+				//$output = $e->faultstring;
+				
+			}
+
+
+			return $response->withStatus(200)->withJson($output);
+		
+	}
+	
 	public function sfdcQuery(Request $request, Response $response,$args)
 	{
 		
@@ -214,7 +166,7 @@ class ApiController extends Controller
 		$query = $request->getQueryParams();
 
 		if(!isset($query['q'])){
-			$search_query = "SELECT Id,Email,FirstName,LastName FROM Lead WHERE Email='jan.fait@mapp.com' LIMIT 1";
+			$search_query = "SELECT Id,Email,FirstName,LastName FROM Lead LIMIT 1";
 		}else{
 			$search_query = $query['q'];;
 		}
@@ -227,57 +179,28 @@ class ApiController extends Controller
 	}
 
 	
-	private function _sfdcAddToCampaign($object_id,$campaign_id,$status)
+	private function _sfdcAddToCampaign($object,$object_id,$campaign_id,$status)
 	{
 		
-
 		//define the membership object
 		$record = new stdClass();
 		
 		//check the record for Contact or Lead Id
-		if($syncObject=='ContactId'){
-			$record -> ContactId = $syncId;
+		if($object=='contact'){
+			$search_field = ucfirst($object)."Id";
+			$record -> ContactId = $object_id;
 		}else{
-			$record-> LeadId = $syncId;	
+			$search_field = ucfirst($object)."Id";
+			$record-> LeadId = $object_id;	
 		}
 		
-		//
-
 		//check if the campaign membership exists
-		$search_query = "SELECT Id FROM CampaignMember WHERE ".$syncObject."='".$syncId."' AND CampaignId='".$campaignId."'";
+		$search_query = "SELECT Id FROM CampaignMember WHERE ".$search_field."='".$object_id."' AND CampaignId='".$campaign_id."'";
+		//run the search
+		$search_result_cm = $this->_sfdcQuery($search_query);
 		
+		return $search_result_cm;
 		
-		$campaignMemberQueryResult = $connection->query($out['campaignMemberSearchQuery']);
-		
-		
-		if(count($campaignMemberQueryResult->records)>0){
-			$campaignMemberId = $campaignMemberQueryResult->records[0]->Id;	
-			$recordToUpdate = new stdClass();
-			$recordToUpdate -> Id = $campaignMemberId;
-			$recordToUpdate -> Status = $parsedBody['campaignMemberStatus'];
-			try {
-				$updateCampaignMembershipResult = $connection->update(array($recordToUpdate),'CampaignMember');
-			}catch (Exception $e){
-				$connection->getLastRequest();
-				$updateCampaignMembershipResult = false;
-				$out['errorMessage'] = $e->faultstring;
-			}
-		}else{
-			$recordToCreate -> CampaignId = $campaignId;
-			$recordToCreate -> Status = $parsedBody['campaignMemberStatus'];
-			//create the campaign membership
-			try {
-				$createCampaignMembershipResult = $connection->create(array($recordToCreate),'CampaignMember');
-			}catch (Exception $e){
-				$connection->getLastRequest();
-				$createCampaignMembershipResult = false;
-				$out['errorMessage'] = $e->faultstring;
-			}
-
-			//collet the campaign member id
-			$campaignMemberId = $createCampaignMembershipResult[0]->id;	
-		}
-
 	}
 	
 	private function _sfdcQuery($query)
@@ -302,7 +225,7 @@ class ApiController extends Controller
 			array_push($results['payload'],$fields);
 		  }
 
-		} catch (Exception $e) {
+		} catch (\Exception $e) {
 
 		  $results['error'] =  true;
 		  $results['sfdc_request'] = $this->sfdc_client->getLastRequest();
@@ -312,9 +235,8 @@ class ApiController extends Controller
 		return $results;
 	}
 	
-	
-	private function _sfdcUpsert($identifier,$object,$body)
-	{
+	private function _sfdcCreate($object,$body){
+		
 		//create the sfdc record object
 		$record = new \stdClass();
 		//get mapping from database for the particular object, key by cep_api_name
@@ -326,9 +248,130 @@ class ApiController extends Controller
 		//assign type to the record
 		$record->type = ucfirst($object);
 		//upsert to sfdc
-		$sfdc_response = $this->sfdc_client->upsert($identifier, array ($record));
+		$sfdc_response = $this->sfdc_client->create(array ($record));
 		//return
 		return $sfdc_response;
+		
+	}
+	
+	private function _sfdcUpsert($identifier,$object,$body)
+	{
+		//create the sfdc record object
+		$record = new \stdClass();
+		//get mapping from database for the particular object, key by cep_api_name
+		$mapping = Mapping::where('sfdc_object',$object)->get()->keyBy('cep_api_name')->toArray();
+		//map fields
+		$fields = $this->_sfdcMap($object,$body,$mapping);
+		//assign type to the record
+		$record->type = ucfirst($object);
+		//assign the fields to the record
+		$record->fields = $fields;
+		//upsert to sfdc
+		$sfdc_response = $this->sfdc_client->upsert("Email", array($record));
+		//return
+		return $sfdc_response;
+	}
+	
+	private function _sfdcUpdate($object_id,$object,$body)
+	{
+		//create the sfdc record object
+		$record = new \stdClass();
+		//get mapping from database for the particular object, key by cep_api_name
+		$mapping = Mapping::where('sfdc_object',$object)->get()->keyBy('cep_api_name')->toArray();
+		//map fields
+		$fields = $this->_sfdcMap($object,$body,$mapping);
+		$fields['Id'] = $object_id;
+		//assign the fields to the record
+		$record->fields = $fields;
+		//assign type to the record
+		$record->type = ucfirst($object);
+		//upsert to sfdc
+		$sfdc_response = $this->sfdc_client->update(array($record));
+		//return
+		return $sfdc_response;
+	}
+	
+	public function sfdcMap(Request $request, Response $response, $args){
+				
+		//get body of request and request params
+		$body = $request->getParsedBody();
+		//collect the output
+		$object = $request->getAttribute('object');
+		//collect mapping
+		$mapping = Mapping::where('sfdc_object',$object)->get()->keyBy('cep_api_name')->toArray();
+		//prepare default output
+		$output = array('error'=>false,'error_message'=>'','payload'=>null,'user'=>$request->getAttribute('user'));
+		//attempt an upsert on the selected object
+		$map = $this->_sfdcMap($object,$body,$mapping);
+		//define output
+		$output['payload'] = $map;
+		
+        return $response->withStatus(200)->withJson($output);
+	}
+	
+	public function sfdcCreate(Request $request, Response $response, $args){
+				
+		//get body of request and request params
+		$body = $request->getParsedBody();
+		//prepare default output
+		$output = array('error'=>false,'error_message'=>'','payload'=>null,'user'=>$request->getAttribute('user'));
+		//collect the output
+		$object = $request->getAttribute('object');
+		//attempt an upsert on the selected object
+		try {
+			$record = $this->_sfdcCreate($object,$body);
+		} catch (\Exception $e) {
+			$record =  $e->faultstring;
+		}
+		//define output
+		$output['payload'] = $record;
+		
+        return $response->withStatus(200)->withJson($output);
+	}
+	
+	private function _sfdcSearch($q,$field='email'){
+		
+		if(isset($q)){
+			$search_query = 'FIND {'.$q.'} IN '.strtoupper($field).' FIELDS RETURNING CONTACT(ID),LEAD(ID)';
+			//do the serach
+			try{
+				$search_result = $this->sfdc_client->search($search_query);	
+				//collect search results
+				$records = $search_result->searchRecords;
+				//create arrays for each object 
+				$contacts = array();
+				$leads = array();
+				//loop over the returned object
+				foreach($records as $key=>$record){
+					if($record->type=='Contact'){
+						$contacts[] = $record->Id;
+					}else{
+						$leads[] = $record->Id;
+					}
+				}
+				
+			} catch (\Exception $e) {
+				return array('contacts'=>null,'leads'=>null);	
+			}
+			return array('contacts'=>$contacts,'leads'=>$leads);
+		}else{
+			return false;
+		}
+	}
+	
+	public function sfdcSearch(Request $request, Response $response, $args){
+		
+		$query = $request->getQueryParams();
+		//prepare default output
+		$output = array('error'=>false,'error_message'=>'','payload'=>null,'user'=>$request->getAttribute('user'));
+		//check arriving email in query
+		if(isset($query['q'])){
+			$output['payload'] = $this->_sfdcSearch($query['q']);
+		}else{
+			$output['error'] = true;
+			$output['error_message'] = "Your request is missing the mandatory parameter 'q' with the search string";
+		}
+		return $response->withStatus(200)->withJson($output);
 	}
 	
 	
@@ -343,10 +386,6 @@ class ApiController extends Controller
 		$output = array('error'=>false,'error_message'=>'','payload'=>null,'user'=>$request->getAttribute('user'));
 		//collect the output
 		$object = $request->getAttribute('object');
-		//collect the identifier
-		$identifier = $query['identifier'];
-		
-		
 		//if identifier isn't set
 		if(!isset($query['identifier'])){
 			$output['error'] = true;
@@ -358,6 +397,7 @@ class ApiController extends Controller
 			$output['error_message'] = "Incorrect value for 'identifier' parameter. Allowed values for the identifier parameter are 'email' or 'identifier'";
 			return $response->withStatus(400)->withJson($output);
 		}else{
+			$identifier = $query['identifier'];
 			//construct the identifier key
 			$identifier_key = "user.".ucfirst($identifier);
 			//collect the actual identifier variable name for sfdc
@@ -370,42 +410,48 @@ class ApiController extends Controller
 			$output['error_message'] = "The required identifier '".$identifier_key."' was not found in your JSON object. The upsert operation cannot proceed";
 			return $response->withStatus(400)->withJson($output);
 		}
-		
-		//if object is set to any, we must decide over preference by searching
-		if($object=='any'){
-			//attempt to search for a contact first
-			$search_query = "SELECT Id,Email FROM Contact WHERE ".$identifier."='".$body[$identifier_key]."' LIMIT 1";
-			//collect results
-			$search_results = $this->_sfdcQuery($search_query);
-			//if the result set for contact search has zero length
-			if($search_results['query_result_size'] == 0){
-				//then we will upsert a lead
-				$object = 'lead';
-			}else{
-				//else a contact
-				$object = 'contact';
-			}
+		//collect existing records using SOSL
+		$records = $this->_sfdcSearch($body[$identifier_key]);
+			
+		//determine which record type applies
+		if(count($records['contacts'])>0){
+			$object = 'contact';
+			$object_id = $records['contacts'][0];
+			$record = $this->_sfdcUpdate($object_id,$object,$body);
+		}else if(count($records['leads'])>0){
+			$object = 'lead';
+			$object_id = $records['leads'][0];
+			
+			$record = $this->_sfdcUpdate($object_id,$object,$body);
+		}else{
+			$record = $this->_sfdcCreate('Lead',$body);	
 		}
-		//attempt an upsert on the selected object
-		$sfdc_response = $this->_sfdcUpsert($identifer,$object,$body);
-		//assign to output
-		$output['payload'] = $sfdc_response;
-		
 		//add to campaign if campaign object supplied
 		if(isset($body["campaign"])){
 			
+			$status = '';
+			//if status empty, collect default status from database
+			if(empty($status)){
+				$status = Setting::where('name','campaign_member_status_default')->first()->value;
+			}
 			//upsert the campaign by Name
-			$campaign = $this->_sfdcUpsert('Name','campaign',$body['campaign']);
-			//collect the campaign Id
-			return $response->withStatus(200)->withJson($campaign);
-	
+			$campaign = $this->_sfdcCreate('Campaign',$body['campaign']);
+			
+			//upsert the campaign member
+			$campaign_member = $this->_sfdcAddToCampaign($object,$record['id'],$campaign['id'],$status);
+			
+		}else{
+			$campaign = null;
+			$campaign_member = null;
 		}
+		
+		$output['payload'] = array('record'=>$record,'campaign'=>$campaign,'campaign_member'=>$campaign_member);
 
         return $response->withStatus(200)->withJson($output);
 	}
 	
 	////////////////////////////////////////////////
-	// Mapp Integrator endpoints
+	// MappForce Admin endpoints
 	////////////////////////////////////////////////		
 	
 	public function mappingGetAll(Request $request, Response $response, $args)
@@ -418,7 +464,8 @@ class ApiController extends Controller
 	public function settingGetAll(Request $request, Response $response, $args)
 	{
 		$output = array('error'=>false,'error_message'=>'','payload'=>null,'user'=>$request->getAttribute('user'));
-		$output['payload'] = Setting::all();
+		$settings = Setting::all();
+		$output['payload'] = $settings;
 		return $response->withJson($output);
 	}
 	
