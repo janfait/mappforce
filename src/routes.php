@@ -51,16 +51,11 @@ $app->group('/admin', function() {
 //route api requests to the api group and validate by ApiAuthenticator
 $app->group('/api', function() {
 	
-	//status check
-	$this->get('/status', 'MappIntegrator\Controller\ApiController:status');
 	//root node
 	$this->get('', 'MappIntegrator\Controller\ApiController:root');
 	$this->get('/', 'MappIntegrator\Controller\ApiController:root');
 	//mapping
 	$this->get('/mapping', 'MappIntegrator\Controller\ApiController:mappingGetAll');
-	//settings
-	$this->get('/settings', 'MappIntegrator\Controller\ApiController:settingGetAll');
-	
 	///////////////////////////////////////////////////////////
 	// CEP GROUP
 	///////////////////////////////////////////////////////////
@@ -81,10 +76,8 @@ $app->group('/api', function() {
 		$this->get('/query', 'MappIntegrator\Controller\ApiController:sfdcQuery');
 		//run a query
 		$this->get('/search', 'MappIntegrator\Controller\ApiController:sfdcSearch');
-		//test
-		$this->get('/test', 'MappIntegrator\Controller\ApiController:sfdcTest');
 		//describe the defined object
-		$this->get('/{object}/describe', 'MappIntegrator\Controller\ApiController:sfdcObject');
+		//$this->get('/{object}/describe', 'MappIntegrator\Controller\ApiController:sfdcObject');
 		//describe the defined object fields
 		$this->get('/{object}/fields', 'MappIntegrator\Controller\ApiController:sfdcObjectFields');
 		//map

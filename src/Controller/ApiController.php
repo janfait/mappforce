@@ -14,20 +14,39 @@ use Slim\Http\Response;
 class ApiController extends Controller
 {
 	
+	
+	private function renderJson(Request $request, Response $response, $data, $status = 200){
+		
+		if($request->getParam('debug')){
+			$data['debug'] = array(
+				'time'=>microtime() - $request->getAttribute('time'),
+				'cep_user'=>$request->getAttribute('user'),
+				'call_stack' => $this->call_stack
+			);
+		}
+		return $response->withJson($data,$status);
+	}
+	
 	////////////////////////////////////////////////
 	// Root
 	////////////////////////////////////////////////
 
     public function root(Request $request, Response $response, $args)
 	{
-		$output = array('error'=>false,'error_message'=>'','payload'=>'This is the API root','user'=>$request->getAttribute('user'));
-        return $response->withJson($output);
-    }
-	
-	public function status(Request $request, Response $response, $args)
-	{
-		$output = array('error'=>false,'error_message'=>'','payload'=>'This is the API root','user'=>$request->getAttribute('user'));
-        return $response->withJson($output);
+		$output = $this->default_output;
+		
+		$router = $this->container->router->getRoutes();
+		$routes = array();
+		foreach($router as $r){
+			if(strpos($r->getPattern(), '/api/') !== false){
+				$routes[] = array('method'=>$r->getMethods()[0],'path'=>$r->getPattern());	
+			}
+			
+		}
+		$output['payload'] = $routes;
+		
+		
+        return $this->renderJson($request,$response,$output);
     }
 	
 	////////////////////////////////////////////////
@@ -36,57 +55,57 @@ class ApiController extends Controller
 	
 	public function cepRoot(Request $request, Response $response, $args)
 	{
-		$cep_response = $this->container->mappCep->getApiVersion();
-        return $response->withStatus($cep_response['httpCode'])->withJson($cep_response);
+		$output = $this->container->mappCep->getApiVersion();
+        return $this->renderJson($request,$response,$output);
+    }
+	
+	public function cepGetContact(Request $request, Response $response, $args)
+	{
+		$output = $this->container->mappCep->getApiVersion();
+        return $this->renderJson($request,$response,$output);
     }
 	
 	////////////////////////////////////////////////
 	// SFDC specific endpoints
 	////////////////////////////////////////////////
 	
-	public function sfdcLogin(Request $request, Response $response, $args)
-	{
-		$output = array('error'=>false,'error_message'=>'','payload'=>'','user'=>$request->getAttribute('user'));
-		$output['payload'] = array('call_stack'=>$this->call_stack,'response_stack'=>$this->response_stack);
-        return $response->withJson($output);
-    }
-	
 	public function sfdcIdentity(Request $request, Response $response, $args)
 	{
-		$output = array('error'=>false,'error_message'=>'','payload'=>'','user'=>$request->getAttribute('user'));
+		$output = $this->default_output;
 		$id = Setting::where('name','sfdc_server_url')->first();
 		$id = $this->_decrypt($id->value,$this->settings['secret']);
 		$id = $this->_sfdc_collect_identity($id);
 		$output['payload'] = $id;
-        return $response->withJson($output);
+        return $this->renderJson($request,$response,$output);
     }
 	
 	public function sfdcUser(Request $request, Response $response, $args)
 	{
-		$output = array('error'=>false,'error_message'=>'','payload'=>null,'user'=>$request->getAttribute('user'));
-		$sfdc_response = $this->sfdc_client->getUserInfo();
-		$output['payload'] = $sfdc_response;
-        return $response->withStatus(200)->withJson($output);
+		$output = $this->default_output;
+		$output['payload'] = $this->sfdc_client->getUserInfo();
+        return $this->renderJson($request,$response,$output);
     }
 	
 	public function sfdcObject(Request $request, Response $response, $args)
 	{
 		$sfdc_response = $this->sfdc_client->describeSObject($request->getAttribute('object'));
-		var_dump($sfdc_response);
         return $response->withStatus(200);
 	}
 	
 	public function sfdcObjectFields(Request $request, Response $response, $args)
 	{
-		$output = array('error'=>false,'error_message'=>'','payload'=>null,'user'=>$request->getAttribute('user'));
+		$output = $this->default_output;
 		$sfdc_response = $this->sfdc_client->describeSObject($request->getAttribute('object'));
 		$sfdc_fields = $this->container->Sforce->getObjectFields($sfdc_response);
 		$output['payload'] = $sfdc_fields;
-        return $response->withStatus(200)->withJson($output);
+        return $this->renderJson($request,$response,$output);
 	}
 	
-	private function _sfdcMap($object,$body,$mapping)
+	private function _sfdcMap($object,$body)
 	{
+		$this->call_stack[] = __FUNCTION__;
+		//get mapping from database for the particular object, key by cep_api_name
+		$mapping = Mapping::where('sfdc_object',$object)->get()->keyBy('cep_api_name')->toArray();
 		//create fields array
 		$fields = [];		
 		//collect the fields from request body and map them according to existing mapping
@@ -122,90 +141,60 @@ class ApiController extends Controller
 		
 	}
 	
-	
-	public function sfdcTest(Request $request, Response $response,$args){
-			//create the sfdc record object
-
-			$createFields = array (
-				'FirstName' => 'test',
-				'LastName' => 'test',
-				'Phone' => '510-555-5555',
-				'Email' => 'test3213@test-domain.com',
-				'Company'=> 'test'
-			);
-			
-			$output = array();
-
-			$sObject = new \stdClass();
-			$sObject->type = 'Lead';
-			$sObject->fields = $createFields;
-
-			$sObject->fields['FirstName'] = 'test3213';
-			$sObject->fields['LastName'] = 'test3213';
-
-			$output[] = "Upserting Lead (existing)";
-			try{
-				$upsertResponse = $this->sfdc_client->upsert("Email", array ($sObject));
-				$output[] = $upsertResponse;
-			} catch (\Exception $e) {
-				
-				$output = $this->sfdc_client->getLastRequest();
-				//$output = $e->faultstring;
-				
-			}
-
-
-			return $response->withStatus(200)->withJson($output);
-		
-	}
-	
 	public function sfdcQuery(Request $request, Response $response,$args)
 	{
 		
 		//get body of request and request params
 		$query = $request->getQueryParams();
+		//get default output
+		$output = $this->default_output;
 
-		if(!isset($query['q'])){
-			$search_query = "SELECT Id,Email,FirstName,LastName FROM Lead LIMIT 1";
+		if(isset($query['q'])){
+			$search_query = $query['q'];
+			$output['payload'] = $this->_sfdcQuery($search_query);
 		}else{
-			$search_query = $query['q'];;
+			$output['error'] = true;
+			$output['error_message'] = 'Required parameter "q" is missing';
 		}
-
-		$query_results = $this->_sfdcQuery($search_query);
-		$output = array('error'=>$query_results['error'],'error_message'=>$query_results['error_message'],'payload'=>$query_results['payload'],'user'=>$request->getAttribute('user')); 
 		
-		return $response->withStatus(200)->withJson($output);
+		return $this->renderJson($request,$response,$output);
 
 	}
 
 	
 	private function _sfdcAddToCampaign($object,$object_id,$campaign_id,$status)
 	{
-		
+		$this->call_stack[] = __FUNCTION__;
 		//define the membership object
 		$record = new stdClass();
-		
 		//check the record for Contact or Lead Id
 		if($object=='contact'){
-			$search_field = ucfirst($object)."Id";
 			$record -> ContactId = $object_id;
 		}else{
-			$search_field = ucfirst($object)."Id";
 			$record-> LeadId = $object_id;	
 		}
-		
+		//define search field for query
+		$search_field = ucfirst($object)."Id";
 		//check if the campaign membership exists
-		$search_query = "SELECT Id FROM CampaignMember WHERE ".$search_field."='".$object_id."' AND CampaignId='".$campaign_id."'";
+		$search_query = "SELECT Id,Status FROM CampaignMember WHERE ".$search_field."='".$object_id."' AND CampaignId='".$campaign_id."' LIMIT 1";
 		//run the search
-		$search_result_cm = $this->_sfdcQuery($search_query);
+		$search_result = $this->_sfdcQuery($search_query);
 		
-		return $search_result_cm;
+		if($search_result['query_result_size']>0){
+			$record_id = $search_result['payload'][0]['Id'];
+			$record->Status = $status;
+			$campaign_member = $this->_sfdcUpdate($record_id,'CampaignMember',$record);
+		}else{
+			$campaign_member = $this->_sfdcCreate('CampaignMember',$record);
+		}
+		
+		return $campaign_member;
 		
 	}
 	
 	private function _sfdcQuery($query)
 	{
-		
+		$this->call_stack[] = __FUNCTION__;
 		$results = array();
 		$results['error'] =  false;
 		$results['error_message'] =  null;
@@ -228,7 +217,6 @@ class ApiController extends Controller
 		} catch (\Exception $e) {
 
 		  $results['error'] =  true;
-		  $results['sfdc_request'] = $this->sfdc_client->getLastRequest();
 		  $results['error_message'] =  $e->faultstring;
 		}
 		
@@ -237,12 +225,11 @@ class ApiController extends Controller
 	
 	private function _sfdcCreate($object,$body){
 		
+		$this->call_stack[] = __FUNCTION__;
 		//create the sfdc record object
 		$record = new \stdClass();
-		//get mapping from database for the particular object, key by cep_api_name
-		$mapping = Mapping::where('sfdc_object',$object)->get()->keyBy('cep_api_name')->toArray();
 		//map fields
-		$fields = $this->_sfdcMap($object,$body,$mapping);
+		$fields = $this->_sfdcMap($object,$body);
 		//assign the fields to the record
 		$record->fields = $fields;
 		//assign type to the record
@@ -256,12 +243,11 @@ class ApiController extends Controller
 	
 	private function _sfdcUpsert($identifier,$object,$body)
 	{
+		$this->call_stack[] = __FUNCTION__;
 		//create the sfdc record object
 		$record = new \stdClass();
-		//get mapping from database for the particular object, key by cep_api_name
-		$mapping = Mapping::where('sfdc_object',$object)->get()->keyBy('cep_api_name')->toArray();
 		//map fields
-		$fields = $this->_sfdcMap($object,$body,$mapping);
+		$fields = $this->_sfdcMap($object,$body);
 		//assign type to the record
 		$record->type = ucfirst($object);
 		//assign the fields to the record
@@ -274,12 +260,11 @@ class ApiController extends Controller
 	
 	private function _sfdcUpdate($object_id,$object,$body)
 	{
+		$this->call_stack[] = __FUNCTION__;
 		//create the sfdc record object
 		$record = new \stdClass();
-		//get mapping from database for the particular object, key by cep_api_name
-		$mapping = Mapping::where('sfdc_object',$object)->get()->keyBy('cep_api_name')->toArray();
 		//map fields
-		$fields = $this->_sfdcMap($object,$body,$mapping);
+		$fields = $this->_sfdcMap($object,$body);
 		$fields['Id'] = $object_id;
 		//assign the fields to the record
 		$record->fields = $fields;
@@ -291,22 +276,19 @@ class ApiController extends Controller
 		return $sfdc_response;
 	}
 	
-	public function sfdcMap(Request $request, Response $response, $args){
-				
+	public function sfdcMap(Request $request, Response $response, $args){	
 		//get body of request and request params
 		$body = $request->getParsedBody();
 		//collect the output
 		$object = $request->getAttribute('object');
-		//collect mapping
-		$mapping = Mapping::where('sfdc_object',$object)->get()->keyBy('cep_api_name')->toArray();
 		//prepare default output
-		$output = array('error'=>false,'error_message'=>'','payload'=>null,'user'=>$request->getAttribute('user'));
+		$output = $this->default_output;
 		//attempt an upsert on the selected object
-		$map = $this->_sfdcMap($object,$body,$mapping);
+		$map = $this->_sfdcMap($object,$body);
 		//define output
 		$output['payload'] = $map;
 		
-        return $response->withStatus(200)->withJson($output);
+        return $this->renderJson($request,$response,$output);
 	}
 	
 	public function sfdcCreate(Request $request, Response $response, $args){
@@ -314,7 +296,7 @@ class ApiController extends Controller
 		//get body of request and request params
 		$body = $request->getParsedBody();
 		//prepare default output
-		$output = array('error'=>false,'error_message'=>'','payload'=>null,'user'=>$request->getAttribute('user'));
+		$output = $this->default_output;
 		//collect the output
 		$object = $request->getAttribute('object');
 		//attempt an upsert on the selected object
@@ -326,11 +308,12 @@ class ApiController extends Controller
 		//define output
 		$output['payload'] = $record;
 		
-        return $response->withStatus(200)->withJson($output);
+        return $this->renderJson($request,$response,$output);
 	}
 	
 	private function _sfdcSearch($q,$field='email'){
 		
+		$this->call_stack[] = __FUNCTION__;
 		if(isset($q)){
 			$search_query = 'FIND {'.$q.'} IN '.strtoupper($field).' FIELDS RETURNING CONTACT(ID),LEAD(ID)';
 			//do the serach
@@ -363,7 +346,7 @@ class ApiController extends Controller
 		
 		$query = $request->getQueryParams();
 		//prepare default output
-		$output = array('error'=>false,'error_message'=>'','payload'=>null,'user'=>$request->getAttribute('user'));
+		$output = $this->default_output;
 		//check arriving email in query
 		if(isset($query['q'])){
 			$output['payload'] = $this->_sfdcSearch($query['q']);
@@ -371,7 +354,7 @@ class ApiController extends Controller
 			$output['error'] = true;
 			$output['error_message'] = "Your request is missing the mandatory parameter 'q' with the search string";
 		}
-		return $response->withStatus(200)->withJson($output);
+		return $this->renderJson($request,$response,$output);
 	}
 	
 	
@@ -383,7 +366,7 @@ class ApiController extends Controller
 		$query = $request->getQueryParams();
 		
 		//prepare default output
-		$output = array('error'=>false,'error_message'=>'','payload'=>null,'user'=>$request->getAttribute('user'));
+		$output = $this->default_output;
 		//collect the output
 		$object = $request->getAttribute('object');
 		//if identifier isn't set
@@ -429,14 +412,18 @@ class ApiController extends Controller
 		//add to campaign if campaign object supplied
 		if(isset($body["campaign"])){
 			
-			$status = '';
 			//if status empty, collect default status from database
-			if(empty($status)){
+			if(!isset($query['status'])){
 				$status = Setting::where('name','campaign_member_status_default')->first()->value;
+			}else{
+				$status = $query['status'];
 			}
 			//upsert the campaign by Name
-			$campaign = $this->_sfdcCreate('Campaign',$body['campaign']);
-			
+			try{
+				$campaign = $this->_sfdcCreate('Campaign',$body['campaign']);
+			}catch(\Exception $e){
+				$campaign = $e->faultstring();
+			}
 			//upsert the campaign member
 			$campaign_member = $this->_sfdcAddToCampaign($object,$record['id'],$campaign['id'],$status);
 			
@@ -447,7 +434,7 @@ class ApiController extends Controller
 		
 		$output['payload'] = array('record'=>$record,'campaign'=>$campaign,'campaign_member'=>$campaign_member);
 
-        return $response->withStatus(200)->withJson($output);
+        return $this->renderJson($request,$response,$output);
 	}
 	
 	////////////////////////////////////////////////
@@ -456,17 +443,17 @@ class ApiController extends Controller
 	
 	public function mappingGetAll(Request $request, Response $response, $args)
 	{
-		$output = array('error'=>false,'error_message'=>'','payload'=>null,'user'=>$request->getAttribute('user'));
+		$output = $this->default_output;
 		$output['payload'] = Mapping::all();
-		return $response->withJson($output);
+		return $this->renderJson($request,$response,$output);
 	}
 	
 	public function settingGetAll(Request $request, Response $response, $args)
 	{
-		$output = array('error'=>false,'error_message'=>'','payload'=>null,'user'=>$request->getAttribute('user'));
+		$output = $this->default_output;
 		$settings = Setting::all();
 		$output['payload'] = $settings;
-		return $response->withJson($output);
+		return $this->renderJson($request,$response,$output);
 	}
 	
 }

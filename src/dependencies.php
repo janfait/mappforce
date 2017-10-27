@@ -4,6 +4,7 @@ require 'Model/Mapp.php';
 require 'Model/Salesforce.php';
 require 'Model/Mapping.php';
 require 'Model/Setting.php';
+require 'Model/CepUser.php';
 
 // Configuration for Slim Dependency Injection Container
 $container = $app->getContainer();
@@ -28,10 +29,14 @@ $capsule->addConnection($container->get('settings')['db']);
 $capsule->setAsGlobal();
 $capsule->bootEloquent();
 
-// Mapp Platform
+// Mapp Platform Executor
 $container['mappCep'] = function ($c) {
-    $mappCep = new \Mapp\CustomerEngagementPlatformApi(); //
-    return $mappCep;
+  return new \Mapp\CustomerEngagementPlatformApi(); //
+};
+
+// Mapp Platform Contact
+$container['mappContact'] = function ($c) {
+    return new \Mapp\Contact();
 };
 
 // Salesforce Executor
@@ -44,8 +49,7 @@ $container['Sforce'] = function ($c) {
 
 // Salesforce Client
 $container['SforceClient'] = function ($c) {
-	$client = new SforcePartnerClient();
-    return $client;
+    return new SforcePartnerClient();
 };
 
 // Twig

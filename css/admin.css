@@ -167,7 +167,7 @@ th.sort.desc:after {
 /*********************************************************/
   
 select {
-	font-family: 'FontAwesome', 'Second Font name'
+	font-family: 'FontAwesome', 'sans-serif'
 	cursor:pointer;
 	display: block;
 	width: 100%;
@@ -188,6 +188,7 @@ select {
 
 select > option {
 	padding:5px;
+	cursor:pointer;
 }
 
 .sfdc_required {
@@ -195,7 +196,7 @@ select > option {
 }
 
 .sfdc_restricted {
-	font-style:underline;
+	font-style:bold;
 }
 
 /*********************************************************/

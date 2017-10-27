@@ -13,7 +13,7 @@
 	<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 
 	<!-- JQuery -->
-	<script src="../js/jquery-1.12.4.min.js"></script>
+	<script src="{{base_url}}/js/jquery-1.12.4.min.js"></script>
 	
 	<!-- Material Design Lite CSS and JavaScript -->
 	<link rel="stylesheet" href="{{base_url}}/css/material.light_blue-cyan.min.css" />
@@ -72,13 +72,13 @@
 								{% if error %}
 									<div class="mdl-components__warning">
 										<b>Error:</b>
-										{{error_message}}
+										{{message}}
 									</div>
 								{% endif %}
 								
-								{% if success %}
+								{% if success and message!='' %}
 									<div class="mdl-components__success">
-										{{success_message}}
+										{{message}}
 									</div>
 								{% endif %}
 
@@ -136,7 +136,7 @@
 									</div>
 								</form>
 								<hr>
-								<p>Mapp Integrator is a product of Mapp Digital/MEME Gmbh. For more information contact your customer representative or visit and reach out to us at <a href="https://mapp.com/contact">Mapp.com</a></p>
+								<p>MappForce is an open-source product developed at Mapp Digital. For more information contact your customer representative or visit and reach out to us at <a href="https://mapp.com/contact">Mapp.com</a></p>
 							</div>
 						</div>
 

@@ -6,6 +6,8 @@ use Slim\Views\Twig as TwigViews;
 use SalesforceSoapClient;
 use Stevenmaguire\OAuth2\Client\Provider\Salesforce
 as SalesforceOauth;
+use Slim\Http\Request;
+use Slim\Http\Response; 
 /**
  * Class Controller
  * @package MappIntegrator\Controller
@@ -17,7 +19,6 @@ abstract class Controller
 	public $container;
 	public $call_stack;
 	public $response_stack;
-	public $call_time;
 	public $sfdc_client;
 	public $sfdc_connection;
 	public $sfdc_session;
@@ -25,7 +26,9 @@ abstract class Controller
 	public $sfdc_oauth_client;
 	public $oauth;
 	protected $mapp_client;
+	public $mapp_contact;
 	public $identifiers;
+	public $default_output;
     /**
      * Controller constructor.
      * @param Container $container
@@ -36,12 +39,30 @@ abstract class Controller
 		$this->container = $container;
         $this->view = $container->view;
 		$this->settings = $container->settings;
+		//populate the mapp client and subclasses
 		$this->mapp_client = $container->mappCep;
+		$this->mapp_contact = $container->mappContact;
+		
+		//initialize settings and constants
 		$this->identifiers = array("email"=>"Email","identifier"=>"Id");
-		$this->oauth = true;
+		$this->oauth = $this->settings['sfdc']['oauth'];
 		$this->call_stack = array();
 		$this->response_stack = array();
+		$this->default_output = array('error'=>false,'error_message'=>'','payload'=>null);
+		$this->default_ui_status = array('error'=>false,'message'=>null,'success'=>false);
+		//attempt sfdc login
 		$this->sfdc_login();
+
+		if(!$this->sfdc_session){
+			
+			$data = $this->default_output;
+			$data['error'] = true;
+			$data['message'] = 'Connection to Salesforce instance failed. Please review your Salesforce credentials and try again';
+			
+			$response = new Response();
+			return $response->withJson($data,403);
+		}
+		
     }
 	
     /**
@@ -120,7 +141,8 @@ abstract class Controller
 		$this->call_stack[] = __FUNCTION__ ;
 		//check token expiry
 		$expiry = $this->sfdc_settings['sfdc_access_token_expires_at'];
-		if (time() > intval($expiry)){
+		$token_expired = time() > intval($expiry);
+		if ($token_expired){
 			//use refresh token to obtain a new access token
 			$refresh_token = $this->_sfdc_refresh_token();
 			//if request fails
@@ -165,8 +187,10 @@ abstract class Controller
 				}else{
 					$setting->value = $value;
 				}
-				//store
+				//store to database
 				$setting->save();
+				//store to existing session settings
+				$this->sfdc_settings[$v] = $value;
 			}
 		}
 		$this->response_stack[] = array(__FUNCTION__=>true);
@@ -308,10 +332,17 @@ abstract class Controller
 					$sfdc_api_server = str_replace("{version}","latest",$sfdc_api_server);
 					//attach session ID and endpoint to the client directly, bypassing the login method
 					$this->sfdc_client->setEndpoint($sfdc_api_server);
-					$this->sfdc_client->setSessionHeader($this->sfdc_settings['sfdc_access_token']);
-					$this->sfdc_session = true;
+					try{
+						$this->sfdc_client->setSessionHeader($this->sfdc_settings['sfdc_access_token']);
+						$this->sfdc_session = true;
+					}catch(\Exception $e){
+						$this->sfdc_session = false;
+						var_dump($e->faultstring);
+						die();
+					}
+					
+					
 				}
-
 			}
 				
 		}

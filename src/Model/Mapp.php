@@ -199,7 +199,7 @@ namespace Mapp;
 		);
 		public $errorCodes = array("OBJECT_ALREADY_EXISTS");
 		//constructor
-		function __construct(CustomerEngagementPlatformApi $system){
+		function __construct(CustomerEngagementPlatformApi $system=null){
 			$this->executor = $system;
 		}
 		private function filterAttributeName($a){
@@ -209,6 +209,13 @@ namespace Mapp;
 		public function validateAttributes(array $attributes){
 			$matchedKeys = array_filter(array_keys($attributes), array($this,'filterAttributeName'));
 			return array_intersect_key($attributes, array_flip($matchedKeys));
+		}
+		public function setCustomAttributes(array $attributes){
+			$this->attributes['Custom'] = $attributes;	
+		}
+		//supply executor from 
+		public function setExecutor(CustomerEngagementPlatformApi $system){
+			$this->executor = $system;
 		}
 		//get by id
 		public function get($params){

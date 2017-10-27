@@ -18,8 +18,6 @@ return [
             'name' => 'mapp-integrator',
             'path' => __DIR__ . '/../storage/logs/app.log',
         ],
-		//authentication mode user vs user+system
-		'authmode' => '',
 		//eloquent configuration
 		'db' => [
             'driver'    => 'sqlite',
@@ -29,7 +27,8 @@ return [
         ],
 		//sfdc settings
 		'sfdc' => [
-			'wsdl'=>__DIR__ . '/../vendor/developerforce/force.com-toolkit-for-php/soapclient/partner.wsdl.xml'
+			'wsdl'=>__DIR__ . '/../vendor/developerforce/force.com-toolkit-for-php/soapclient/partner.wsdl.xml',
+			'oauth'=>true
 		],
 		//encryption
 		'secret'=> getenv('SECRET'),

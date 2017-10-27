@@ -1,5 +1,7 @@
 <?php
 
+use \MappIntegrator\Setting as Setting;
+use \MappIntegrator\CepUser as CepUser;
 
 // Authenticator using Mapp /systemuser domain to get user data
 class MappApiAuthenticator
@@ -8,11 +10,18 @@ class MappApiAuthenticator
 	public function __construct($container) {
         $this->container = $container;
     }
+	
+	
+	private function store_user($data){
+		//update or create the user by instance and username
+		$user = CepUser::updateOrCreate([
+			'instance'=>$data['instance'],
+			'username'=>$data['username']
+		],$data);
+	}
+	
     public function __invoke($request, $response, $next)
     {
-
-		//todo: timing of requests for api calls
-		$start_time = microtime();
 		$host = $request->getUri()->getHost();
         $scheme = $request->getUri()->getScheme();
         $server_params = $request->getServerParams();
@@ -53,20 +62,34 @@ class MappApiAuthenticator
 		}
 		//collect user
 		if($this->container->has('mappCep')) {
-			$mappCep = $this->container->mappCep;
-			$mappCep -> setInstance($instance);
-			$mappCep -> setAuthentication($user,$password);
-			$mappCepUser = $mappCep->getSystemUser();
+			//initialize a blank Mapp CEP instance
+			$mapp_cep = $this->container->mappCep;
+			$mapp_cep -> setInstance($instance);
+			$mapp_cep -> setAuthentication($user,$password);
+			//attempt a call to the /systemuser endpoint
+			$mapp_cep_user = $mapp_cep->getSystemUser();
 			
 			//challenge again if authentication failed
-			if(true === $mappCepUser['error']){
+			if(true === $mapp_cep_user['error']){
 				$response = $response
 					->withStatus(401)
 					->withHeader("WWW-Authenticate", sprintf('Basic realm="%s"', $realm))
 					->withJson($output);
 				return $response;
 			}else{
-				$request = $request->withAttribute('user', $mappCepUser['data']);
+				//update or create user
+				if(false){
+					$this->store_user(
+						array(
+							'instance'=>$instance,
+							'username'=>$user,
+							'password'=>$password,
+							'cep_role'=>'API'
+						)
+					);
+				}
+				//pass on the request
+				$request = $request->withAttribute('user', $mapp_cep_user['data'])->withAttribute('time',microtime());
 			}
 			
         }else{

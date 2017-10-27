@@ -15,7 +15,31 @@ class AdminController extends Controller
 {
 	
 	public $mapp_user;
-
+	
+	
+	public function renderAdminUI(Request $request, Response $response, $template, $body = null, $status = 200, $redirect = null){
+		
+		//assign default body if not supplied
+		if(empty($body)){
+			$body = $this->default_ui_status;
+		}
+		//add standard body elements
+		$body['debug'] = $this->container->get('settings')['debug'];
+		$body['user'] = $request->getAttribute('user');
+		
+		//redirect to supplied pathName
+		if(empty($redirect)){
+			$ui = $this->view->fetch($template,$body);
+			//write body directly
+			return $response->write($ui)->withStatus($status);
+		}else{
+			$ui = $body;
+			//redirect the response
+			return $response->withRedirect($this->container->router->pathFor($redirect));	
+		}
+			
+	}
+	
 /////////////////////////////////////////////////////////////////////////////////////	
 	public function logout(Request $request, Response $response, $args)
 	{
@@ -26,33 +50,22 @@ class AdminController extends Controller
 		session_unset();
 		session_destroy();
 
-		$body = $this->view->fetch('admin/pages/login.twig', [
-			'error' => false,
-			'error_message'=>'',
-			'success' => true,
-			'success_message'=>'You have logged out',
-			'debug' => $this->container->get('settings')['debug']
-        ]);
+		$body = $this->default_ui_status;
+		$body['message'] = 'You have logged out';
 		
-		return $response->write($body)->withRedirect($this->container->router->pathFor('showLogin'));
-		
+		return $this->renderAdminUI($request,$response,'admin/pages/login.twig',$body,200,'showLogin');
 	}	
 	
 /////////////////////////////////////////////////////////////////////////////////////	
 	public function goLogin(Request $request, Response $response, $args)
 	{
-		return $response->withRedirect($this->container->router->pathFor('showLogin'));
+		return $this->renderAdminUI($request,$response,null,null,200,'showLogin');
 	}
 /////////////////////////////////////////////////////////////////////////////////////	
 	public function showLogin(Request $request, Response $response, $args)
     {
+		return $this->renderAdminUI($request,$response,'admin/pages/login.twig',null,200);
 
-		$body = $this->view->fetch('admin/pages/login.twig', [
-			'error' => false,
-			'debug' => $this->container->get('settings')['debug']
-        ]);
-
-        return $response->write($body);
     }
 /////////////////////////////////////////////////////////////////////////////////////
 	public function login(Request $request, Response $response, $args)
@@ -65,15 +78,11 @@ class AdminController extends Controller
 
 		if(!isset($this->mapp_user) | true === $this->mapp_user['error']){
 			
-			$body = $this->view->fetch('admin/pages/login.twig', [
-				'error' => true,
-				'error_message'=>'Incorrect credentials. Please try again. Make sure your Mapp API user is active and this IP whitelisted',
-				'success' => false,
-				'success_message'=>'',
-				'debug' => $this->container->get('settings')['debug']
-			]);
-			
-			return $response->withStatus(401)->write($body);
+			$body = $this->default_ui_status;
+			$body['error'] = true;
+			$body['message'] = 'Incorrect credentials. Please try again. Make sure your Mapp API user is active and this IP whitelisted';
+
+			return $this->renderAdminUI($request,$response,'admin/pages/login.twig',$body,401);
 
 		}else{
 			
@@ -83,7 +92,7 @@ class AdminController extends Controller
 			$_SESSION['USERNAME'] = $this->_encrypt($data['username'],$this->settings['secret']);
 			$_SESSION['PWD'] = $this->_encrypt($data['password'],$this->settings['secret']);
 
-			return $response->withRedirect($this->container->router->pathFor('home'));
+			return $this->renderAdminUI($request,$response,null,null,200,'home');
 		
 		}
 
@@ -91,14 +100,6 @@ class AdminController extends Controller
 /////////////////////////////////////////////////////////////////////////////////////	
 	public function home(Request $request, Response $response, $args)
     {
-
-		$status = array(
-			'error'=>false,
-			'error_message'=>null,
-			'success'=>false,
-			'success_message'=>null
-		);
-		
 		//collect the number of stored mappings
 		$lead_standard_mapping = Mapping::where(['sfdc_object'=>'lead','cep_attr_type'=>'standard'])->count();
 		$lead_custom_mapping = Mapping::where(['sfdc_object'=>'lead','cep_attr_type'=>'custom'])->count();
@@ -108,42 +109,20 @@ class AdminController extends Controller
 		
 		$settings = Setting::where('realm','sfdc')->count();
 		
-		$tiles = array(
+		$body = array(
 			'lead'=>array('standard'=>$lead_standard_mapping,'custom'=>$lead_custom_mapping),
 			'contact'=>array('standard'=>$contact_standard_mapping,'custom'=>$contact_custom_mapping),
 			'campaign'=>$campaign_mapping,
 			'settings'=>false,
 		);
 
-		$body = $this->view->fetch('admin/pages/homepage.twig', [
-			'user' =>  $request->getAttribute('user'),
-			'tiles' => $tiles,
-			'debug' => $this->container->get('settings')['debug']
-        ]);
+		return $this->renderAdminUI($request,$response,'admin/pages/homepage.twig',$body,200);
 
-        return $response->write($body);
     }
 /////////////////////////////////////////////////////////////////////////////////////
 	public function gettingStarted(Request $request, Response $response, $args)
 	{
-
-		$status = array(
-			'error'=>false,
-			'error_message'=>null,
-			'success'=>false,
-			'success_message'=>null
-		);
-	
-		$body = $this->view->fetch('admin/pages/getting_started.twig', [
-			'user' =>  $request->getAttribute('user'),
-			'error' => false,
-			'error_message'=>'',
-			'success' => false,
-			'success_message'=>'',
-			'debug' => $this->container->get('settings')['debug']
-		]);
-		
-		return $response->write($body);
+		return $this->renderAdminUI($request,$response,'admin/pages/getting_started.twig',null,200);
 
 	}
 /////////////////////////////////////////////////////////////////////////////////////
@@ -167,14 +146,7 @@ class AdminController extends Controller
 /////////////////////////////////////////////////////////////////////////////////////	
 	public function getMapping(Request $request, Response $response, $args)
 	{
-		
-		$status = array(
-			'error'=>false,
-			'message'=>null,
-			'success'=>false
-		);
-
-		//populate mapp client from session
+		//populate mapp client from session todo: remove from controller methods to middleware/make common for all methods
 		$this->mapp_client->setInstance(
 			$this->_decrypt($_SESSION['INST'],$this->settings['secret'])
 		);
@@ -182,7 +154,10 @@ class AdminController extends Controller
 			$this->_decrypt($_SESSION['USERNAME'],$this->settings['secret']),
 			$this->_decrypt($_SESSION['PWD'],$this->settings['secret'])
 		);
-		
+		$this->mapp_contact->setExecutor(
+			$this->mapp_client
+		);
+
 		//collect data from Mapp CEP system
 		$cep_response = $this->mapp_client->getAttributeDefinitions();
 		$cep_custom_attributes = $cep_response['data'];
@@ -248,21 +223,17 @@ class AdminController extends Controller
 		}
 		
 		//render mapping view with CEP, SFDC and settings data
-		$body = $this->view->fetch('admin/pages/mapping.twig', [
+		$body = array(
 			'cep_group_attributes' => $cep_group_attributes,
 			'cep_standard_attributes' => $cep_standard_attributes,
 			'cep_custom_attributes' => $cep_custom_attributes,
 			'sfdc_campaign_fields' => $sfdc_campaign_fields,
 			'sfdc_lead_fields' => $sfdc_lead_fields,
 			'sfdc_contact_fields' => $sfdc_contact_fields,
-			'user' =>  $request->getAttribute('user'),
-			'error' => $status['error'],
-			'message'=>$status['message'],
-			'success' => $status['success'],
-			'debug' => $this->container->get('settings')['debug']
-        ]);
+			'error' => false
+        );
 
-        return $response->write($body);
+        return $this->renderAdminUI($request,$response,'admin/pages/mapping.twig',$body,200);
 
 	}
 
@@ -334,15 +305,7 @@ class AdminController extends Controller
 		$mapping = Mapping::where('cep', '=', $mapping_id);
 		Mapping::find($mapping_id)->delete();
 
-		$body = $this->view->fetch('admin/pages/mapping.twig', [
-			'user' =>  $request->getAttribute('user'),
-			'error' => false,
-			'error_message'=>'',
-			'success' => false,
-			'success_message'=>'You have logged out',
-			'debug' => $this->container->get('settings')['debug']
-		]);
-        return $response->write($body);
+        return $this->renderAdminUI($request,$response,'admin/pages/mapping.twig',$body,200);
 
 	}
 /////////////////////////////////////////////////////////////////////////////////////
