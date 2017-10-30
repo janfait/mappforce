@@ -45,11 +45,11 @@ abstract class Controller
 		
 		//initialize settings and constants
 		$this->identifiers = array("email"=>"Email","identifier"=>"Id");
-		$this->valid_objects = array('contact','lead','campaign');
+		$this->valid_objects = array('contact','lead','campaign','any');
 		$this->error_messages = array(
 			'MISSING_REQUIRED_ATTRIBUTE' => 'Your request query string is missing a required parameter',
-			'OBJECT_NOT_ALLOWED' => 'Your request uses an invalid object attribute. The allowed objects are: ',
-			'IDENTIFER_NOT_ALLOWED' => 'Your request uses an invalid parameter. The allowed identifiers are: ',
+			'OBJECT_NOT_ALLOWED' => 'Your request uses an invalid object attribute. The allowed objects are:'.implode(",",$this->valid_objects),
+			'IDENTIFER_NOT_ALLOWED' => 'Your request uses an invalid parameter. The allowed identifiers are:'.implode(",",$this->identifiers),
 			'MISSING_REQUIRED_FIELD' => 'Your request body is missing a required field.'
 		);
 		$this->oauth = $this->settings['sfdc']['oauth'];

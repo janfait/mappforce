@@ -28,10 +28,16 @@ class ApiController extends Controller
 	
 	private function renderError(Request $request, Response $response, $error_code, $function = null, $status = 400){
 		
-		$output = $this->default_output;
-		$output['error'] = true;
-		$output['error_message'] = $this->error_messages[$error];
-		return $response->withJson($output,$status);
+		$data = $this->default_output;
+		$data['error'] = true;
+		$data['error_message'] = $this->error_messages[$error_code];
+		if($request->getParam('debug')){
+			$data['debug'] = array(
+				'cep_user'=>$request->getAttribute('user'),
+				'call_stack' => $this->call_stack
+			);
+		}
+		return $response->withJson($data,$status);
 		
 	}
 	
@@ -110,15 +116,27 @@ class ApiController extends Controller
     }
 	
 	public function sfdcObject(Request $request, Response $response, $args)
-	{
-		$sfdc_response = $this->sfdc_client->describeSObject($request->getAttribute('object'));
+	{	
+		//collect object
+		$object = $request->getAttribute('object');
+		//validate object
+		if(!$this->_validateObject($object)){
+			$this->renderError($request,$response,'OBJECT_NOT_ALLOWED');
+		}
+		$sfdc_response = $this->sfdc_client->describeSObject($object);
         return $response->withStatus(200);
 	}
 	
 	public function sfdcObjectFields(Request $request, Response $response, $args)
 	{
 		$output = $this->default_output;
-		$sfdc_response = $this->sfdc_client->describeSObject($request->getAttribute('object'));
+		//collect object
+		$object = $request->getAttribute('object');
+		//validate object
+		if(!$this->_validateObject($object)){
+			$this->renderError($request,$response,'OBJECT_NOT_ALLOWED');
+		}
+		$sfdc_response = $this->sfdc_client->describeSObject($object);
 		$sfdc_fields = $this->container->Sforce->getObjectFields($sfdc_response);
 		$output['payload'] = $sfdc_fields;
         return $this->renderOutput($request,$response,$output);
@@ -188,12 +206,7 @@ class ApiController extends Controller
 		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
 		//define the membership object
 		$record = new \stdClass();
-		//check the record for Contact or Lead Id
-		if($object=='contact'){
-			$record -> ContactId = $object_id;
-		}else{
-			$record-> LeadId = $object_id;	
-		}
+		//add status
 		$record->Status = $status;
 		//define search field for query
 		$search_field = ucfirst($object)."Id";
@@ -206,6 +219,12 @@ class ApiController extends Controller
 			$record_id = $search_result['payload'][0]['Id'];
 			$campaign_member = $this->_sfdcUpdate($record_id,'CampaignMember',$record);
 		}else{
+			//check the record for Contact or Lead Id
+			if($object=='contact'){
+				$record -> ContactId = $object_id;
+			}else{
+				$record-> LeadId = $object_id;	
+			}
 			$record->CampaignId = $campaign_id;
 			$campaign_member = $this->_sfdcCreate('CampaignMember',$record);
 		}
@@ -332,6 +351,10 @@ class ApiController extends Controller
 		$body = $request->getParsedBody();
 		//collect the output
 		$object = $request->getAttribute('object');
+		//validate object
+		if(!$this->_validateObject($object)){
+			$this->renderError($request,$response,'OBJECT_NOT_ALLOWED');
+		}
 		//prepare default output
 		$output = $this->default_output;
 		//attempt an upsert on the selected object
@@ -343,13 +366,17 @@ class ApiController extends Controller
 	}
 	
 	public function sfdcCreate(Request $request, Response $response, $args)
-	{	
+	{		
 		//get body of request and request params
 		$body = $request->getParsedBody();
 		//prepare default output
 		$output = $this->default_output;
 		//collect the output
 		$object = $request->getAttribute('object');
+		//validate object
+		if(!$this->_validateObject($object)){
+			$this->renderError($request,$response,'OBJECT_NOT_ALLOWED');
+		}
 		//attempt an upsert on the selected object
 		try {
 			$record = $this->_sfdcCreate($object,$body);
@@ -370,6 +397,10 @@ class ApiController extends Controller
 		$output = $this->default_output;
 		//collect the output
 		$object = $request->getAttribute('object');
+		//validate object
+		if(!$this->_validateObject($object)){
+			$this->renderError($request,$response,'OBJECT_NOT_ALLOWED');
+		}
 		//
 		if(!isset($query['id'])){
 			$this->renderError($request,$response,'MISSING_REQUIRED_PARAMETER',__FUNCTION__);
@@ -441,7 +472,11 @@ class ApiController extends Controller
 		$output = $this->default_output;
 		//collect the output
 		$object = $request->getAttribute('object');
-		
+		//validate object
+		if(!$this->_validateObject($object)){
+			$this->renderError($request,$response,'OBJECT_NOT_ALLOWED');
+		}
+		//validate identifier
 		if(!isset($query['identifier'])){
 			$this->renderError($request,$response,'MISSING_REQUIRED_PARAMETER');
 		}else{
@@ -461,11 +496,15 @@ class ApiController extends Controller
 		$output = $this->default_output;
 		//collect the output
 		$object = $request->getAttribute('object');
+		//validate object
+		if(!$this->_validateObject($object)){
+			$this->renderError($request,$response,'OBJECT_NOT_ALLOWED');
+		}
 		//if identifier isn't set
 		if(!isset($query['identifier'])){
 			$this->renderError($request,$response,'MISSING_REQUIRED_PARAMETER');
 		//if identifier is outside of the alloweed value range
-		}else if($query['identifier']!="email" && $query['identifier']!="identifier"){
+		}else if(!array_key_exists($query['identifier'],$this->identifiers)){
 			$this->renderError($request,$response,'IDENTIFIER_NOT_ALLOWED');
 		}else{
 			$identifier = $query['identifier'];
@@ -474,7 +513,6 @@ class ApiController extends Controller
 			//collect the actual identifier variable name for sfdc
 			$identifier = $this->identifiers[$identifier];
 		}
-
 		//check if identifier key node is present in the supplied JSON object
 		if(!isset($body[$identifier_key])){
 			$this->renderError($request,$response,'MISSING_REQUIRED_FIELD');
@@ -499,10 +537,10 @@ class ApiController extends Controller
 		if(isset($body["campaign"])){
 			
 			//if status empty, collect default status from database
-			if(!isset($query['status'])){
+			if(!isset($body['campaign']['status'])){
 				$status = Setting::where('name','campaign_member_status_default')->first()->value;
 			}else{
-				$status = $query['status'];
+				$status = $body['campaign']['status'];
 			}
 			//upsert the campaign member
 			$campaign = $this->_sfdcUpsertBy('Name','campaign',$body['campaign']);
