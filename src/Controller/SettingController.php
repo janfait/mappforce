@@ -25,7 +25,7 @@ class SettingController extends Controller
 		return $response->withJson($sfdc_user);
 	}
 
-	public function authorize(Request $request, Response $response, $args){
+	public function authorizeApp(Request $request, Response $response, $args){
 		//revert if oauth settings are not initialized
 		$this->_sfdc_collect_settings();
 		//check presence of authorization settings
@@ -54,6 +54,9 @@ class SettingController extends Controller
 		$authorization_code = $query['code'];
 		//collect the request state arriving from the authorization url
 		$state = $query['state'];
+		if(!isset($state)){
+			return $response->withRedirect($this->container->router->pathFor('getSetting',[],['success'=>0,'error_message'=>'missing_state']));
+		}
 		//check state
 		if(empty($authorization_code)){
 			return $response->withRedirect($this->container->router->pathFor('getSetting',[],['success'=>0,'error_message'=>'missing_authorization_code']));
@@ -72,13 +75,7 @@ class SettingController extends Controller
 
 	public function get(Request $request, Response $response, $args){
 
-	
-		$status = array(
-			'error'=>false,
-			'error_message'=>null,
-			'success'=>false,
-			'message'=>null
-		);
+		$status = $this->default_ui_status;
 		//collect query
 		$query = $request->getQueryParams();
 	

@@ -29,7 +29,7 @@ $app->group('/admin', function() {
 	$this->post('/settings/delete', 'MappIntegrator\Controller\SettingController:delete')->setName('deleteSetting');
 	$this->get('/settings/connection', 'MappIntegrator\Controller\SettingController:testConnection')->setName('testConnection');
 	$this->get('/settings/oauth', 'MappIntegrator\Controller\SettingController:oauth')->setName('oauth');
-	$this->get('/settings/authorize', 'MappIntegrator\Controller\SettingController:authorize')->setName('authorize');
+	$this->get('/settings/authorize', 'MappIntegrator\Controller\SettingController:authorizeApp')->setName('authorize');
 	
 	///////////////////////////////////////////////////////////
 	// MAPPING
@@ -84,6 +84,8 @@ $app->group('/api', function() {
 		$this->post('/{object}/map', 'MappIntegrator\Controller\ApiController:sfdcMap');
 		//upsert the defined object
 		$this->post('/{object}/upsert', 'MappIntegrator\Controller\ApiController:sfdcUpsert');
+		//generic upsert by method
+		$this->post('/{object}/upsertby', 'MappIntegrator\Controller\ApiController:sfdcUpsertBy');
 		//create a defined object
 		$this->post('/{object}/create', 'MappIntegrator\Controller\ApiController:sfdcCreate');
 	});

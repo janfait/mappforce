@@ -45,11 +45,19 @@ abstract class Controller
 		
 		//initialize settings and constants
 		$this->identifiers = array("email"=>"Email","identifier"=>"Id");
+		$this->valid_objects = array('contact','lead','campaign');
+		$this->error_messages = array(
+			'MISSING_REQUIRED_ATTRIBUTE' => 'Your request query string is missing a required parameter',
+			'OBJECT_NOT_ALLOWED' => 'Your request uses an invalid object attribute. The allowed objects are: ',
+			'IDENTIFER_NOT_ALLOWED' => 'Your request uses an invalid parameter. The allowed identifiers are: ',
+			'MISSING_REQUIRED_FIELD' => 'Your request body is missing a required field.'
+		);
 		$this->oauth = $this->settings['sfdc']['oauth'];
 		$this->call_stack = array();
 		$this->response_stack = array();
 		$this->default_output = array('error'=>false,'error_message'=>'','payload'=>null);
 		$this->default_ui_status = array('error'=>false,'message'=>null,'success'=>false);
+		$this->mapping_exceptions = array('LeadId','ContactId','Status','Id');
 		//attempt sfdc login
 		$this->sfdc_login();
 
@@ -74,7 +82,7 @@ abstract class Controller
 	public function _sfdc_collect_settings()
 	{
 		
-		$this->call_stack[] = __FUNCTION__ ;
+		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
 		//collect data
 		$settings = Setting::where('realm','sfdc')->get();
 		$_settings = array();
@@ -101,7 +109,7 @@ abstract class Controller
 	
 	public function _sfdc_check_settings()
 	{
-		$this->call_stack[] = __FUNCTION__ ;
+		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
 		//pass the sfdc settings property
 		$s = $this->sfdc_settings;
 		//if using the oauth flow
@@ -125,7 +133,7 @@ abstract class Controller
 	public function _sfdc_check_authorization_settings()
 	{
 		
-		$this->call_stack[] = __FUNCTION__ ;
+		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
 		//pass the sfdc settings property
 		$s = $this->sfdc_settings;
 		//check that authorization settings are defined
@@ -138,7 +146,7 @@ abstract class Controller
 	public function _sfdc_validate_access_token()
 	{
 		
-		$this->call_stack[] = __FUNCTION__ ;
+		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
 		//check token expiry
 		$expiry = $this->sfdc_settings['sfdc_access_token_expires_at'];
 		$token_expired = time() > intval($expiry);
@@ -158,7 +166,7 @@ abstract class Controller
 	private function _sfdc_store_oauth_token($token)
 	{
 		
-		$this->call_stack[] = __FUNCTION__ ;
+		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
 		//define mapping between what is supplied by SFDC and how it enters database
 		$map = array(
 			'access_token'=>'sfdc_access_token',
@@ -201,7 +209,7 @@ abstract class Controller
 	public function _sfdc_collect_oauth_token($code)
 	{
 		
-		$this->call_stack[] = __FUNCTION__ ;
+		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
 		//collect settings due to a redirect between MappForce and authorization url
 		$this->_sfdc_collect_settings();
 		//define the POST parameters
@@ -235,7 +243,7 @@ abstract class Controller
 	public function _sfdc_refresh_token()
 	{
 		
-		$this->call_stack[] = __FUNCTION__ ;
+		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
 		//define the POST parameters
 		$params = "grant_type=refresh_token"
 		   . "&client_id=" . $this->sfdc_settings['sfdc_consumer_key']
@@ -266,7 +274,7 @@ abstract class Controller
 	public function _sfdc_collect_identity($id)
 	{
 		
-		$this->call_stack[] = __FUNCTION__ ;
+		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
 		//id parameter is a identity url
 		$curl = curl_init($id);
 		//place the oauth access token with to the authentication header
@@ -300,7 +308,7 @@ abstract class Controller
 	public function sfdc_login()
 	{
 		
-		$this->call_stack[] = __FUNCTION__ ;
+		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
 		//create default session flag
 		$this->sfdc_session = false;
 		//initialize client
