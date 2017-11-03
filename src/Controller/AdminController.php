@@ -43,7 +43,8 @@ class AdminController extends Controller
 /////////////////////////////////////////////////////////////////////////////////////	
 	public function logout(Request $request, Response $response, $args)
 	{
-		$this->sfdc_client->invalidateSessions();
+		//$this->sfdc_client->invalidateSessions();
+		$this->sfdc_client->setSessionHeader(null);
 		$this->sfdc_client = null;
 
 		session_start();
@@ -51,6 +52,7 @@ class AdminController extends Controller
 		session_destroy();
 
 		$body = $this->default_ui_status;
+		$body['success'] = true;
 		$body['message'] = 'You have logged out';
 		
 		return $this->renderAdminUI($request,$response,'admin/pages/login.twig',$body,200,'showLogin');
@@ -133,7 +135,7 @@ class AdminController extends Controller
 		
 		foreach($data as $row){
 			$mapping = Mapping::updateOrCreate([
-				'cep'=> $row['cep'],
+				'cep'=> $row['cep_name'],
 				'sfdc_object'=>$row['sfdc_object'],
 				'cep_attr_type'=>$row['cep_attr_type']
 			],$row);
@@ -146,6 +148,8 @@ class AdminController extends Controller
 /////////////////////////////////////////////////////////////////////////////////////	
 	public function getMapping(Request $request, Response $response, $args)
 	{
+		
+		
 		//populate mapp client from session todo: remove from controller methods to middleware/make common for all methods
 		$this->mapp_client->setInstance(
 			$this->_decrypt($_SESSION['INST'],$this->settings['secret'])
@@ -157,11 +161,14 @@ class AdminController extends Controller
 		$this->mapp_contact->setExecutor(
 			$this->mapp_client
 		);
+		
+		$status = $this->default_ui_status;
 
 		//collect data from Mapp CEP system
 		$cep_response = $this->mapp_client->getAttributeDefinitions();
 		$cep_custom_attributes = $cep_response['data'];
 		$cep_standard_attributes = $this->mapp_client->getStandardAttributeDefinitions();
+		$cep_member_attributes = Mapping::where('cep_attr_type','member')->get()->keyBy('cep')->toArray();
 		$cep_group_attributes = $this->mapp_client->getGroupAttributeDefinitions();
 
 		//collect fields from Salesforce
@@ -212,6 +219,19 @@ class AdminController extends Controller
 			}
 		}
 		
+		//combine database and cep values for member attributes
+		foreach($cep_member_attributes as $key=>$value){
+			if(array_key_exists($value['cep'],$lead_mapping)){
+				$cep_member_attributes[$key]['lead'] = $lead_mapping[$value['cep']]['sfdc_name'];
+				$cep_member_attributes[$key]['lead_active'] = $lead_mapping[$value['cep']]['active'];
+				$cep_member_attributes[$key]['lead_function'] = $lead_mapping[$value['cep']]['sfdc_function'];
+			}
+			if(array_key_exists($value['cep'],$contact_mapping)){
+				$cep_member_attributes[$key]['contact'] = $contact_mapping[$value['cep']]['sfdc_name'];
+				$cep_member_attributes[$key]['contact_active'] = $contact_mapping[$value['cep']]['active'];
+				$cep_member_attributes[$key]['contact_function'] = $contact_mapping[$value['cep']]['sfdc_function'];
+			}
+		} 
 		
 		//combine database and cep values for group attributes
 		foreach($cep_group_attributes as $key=>$value){
@@ -227,10 +247,11 @@ class AdminController extends Controller
 			'cep_group_attributes' => $cep_group_attributes,
 			'cep_standard_attributes' => $cep_standard_attributes,
 			'cep_custom_attributes' => $cep_custom_attributes,
+			'cep_member_attributes' => $cep_member_attributes,
 			'sfdc_campaign_fields' => $sfdc_campaign_fields,
 			'sfdc_lead_fields' => $sfdc_lead_fields,
 			'sfdc_contact_fields' => $sfdc_contact_fields,
-			'error' => false
+			'error' => $status['error']
         );
 
         return $this->renderAdminUI($request,$response,'admin/pages/mapping.twig',$body,200);

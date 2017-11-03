@@ -27,7 +27,7 @@ class SettingsDictionary {
 	public $dictionary = array(
 		'cep_instance'=>array(
 			'realm'=>'cep',
-			'category'=>'main',
+			'category'=>'connection',
 			'name'=>'cep_instance',
 			'required'=>false,
 			'value'=>'',
@@ -40,7 +40,7 @@ class SettingsDictionary {
 		),
 		'cep_username'=>array(
 			'realm'=>'cep',
-			'category'=>'main',
+			'category'=>'authentication',
 			'name'=>'cep_username',
 			'required'=>false,
 			'value'=>'',
@@ -53,7 +53,7 @@ class SettingsDictionary {
 		),
 		'cep_password'=>array(
 			'realm'=>'cep',
-			'category'=>'main',
+			'category'=>'authentication',
 			'name'=>'cep_password',
 			'required'=>false,
 			'value'=>'',
@@ -66,7 +66,7 @@ class SettingsDictionary {
 		),
 		'cep_group_template_id'=>array(
 			'realm'=>'cep',
-			'category'=>'main',
+			'category'=>'transfer',
 			'name'=>'cep_template_group_id',
 			'required'=>false,
 			'value'=>0,
@@ -79,7 +79,7 @@ class SettingsDictionary {
 		),
 		'cep_clone_group_id'=>array(
 			'realm'=>'cep',
-			'category'=>'main',
+			'category'=>'transfer',
 			'name'=>'cep_clone_group_id',
 			'required'=>false,
 			'value'=>0,
@@ -92,7 +92,7 @@ class SettingsDictionary {
 		),
 		'cep_domain'=>array(
 			'realm'=>'cep',
-			'category'=>'main',
+			'category'=>'connection',
 			'name'=>'cep_domain',
 			'required'=>false,
 			'value'=>'cook',
@@ -105,7 +105,7 @@ class SettingsDictionary {
 		),
 		'cep_secret'=>array(
 			'realm'=>'cep',
-			'category'=>'main',
+			'category'=>'authentication',
 			'name'=>'cep_secret',
 			'required'=>false,
 			'value'=>'',
@@ -170,7 +170,7 @@ class SettingsDictionary {
 		),
 		'sfdc_redirect_uri'=>array(
 			'realm'=>'sfdc',
-			'category'=>'authentication',
+			'category'=>'connected_app',
 			'name'=>'sfdc_redirect_uri',
 			'required'=>false,
 			'value'=>'',
@@ -183,7 +183,7 @@ class SettingsDictionary {
 		),
 		'sfdc_consumer_secret'=>array(
 			'realm'=>'sfdc',
-			'category'=>'authentication',
+			'category'=>'connected_app',
 			'name'=>'sfdc_consumer_secret',
 			'required'=>false,
 			'value'=>'',
@@ -196,7 +196,7 @@ class SettingsDictionary {
 		),
 		'sfdc_consumer_key'=>array(
 			'realm'=>'sfdc',
-			'category'=>'authentication',
+			'category'=>'connected_app',
 			'name'=>'sfdc_consumer_key',
 			'required'=>false,
 			'value'=>'',
@@ -261,7 +261,7 @@ class SettingsDictionary {
 		),
 		'sandbox_flag'=>array(
 			'realm'=>'sfdc',
-			'category'=>'main',
+			'category'=>'connection',
 			'name'=>'sandbox_flag',
 			'required'=>false,
 			'value'=>true,
@@ -274,7 +274,7 @@ class SettingsDictionary {
 		),
 		'assignment_rule'=>array(
 			'realm'=>'sfdc',
-			'category'=>'main',
+			'category'=>'connection',
 			'name'=>'assignment_rule',
 			'required'=>false,
 			'value'=>false,
@@ -287,7 +287,7 @@ class SettingsDictionary {
 		),
 		'assignment_rule_flag'=>array(
 			'realm'=>'sfdc',
-			'category'=>'main',
+			'category'=>'connection',
 			'name'=>'assignment_rule_flag',
 			'required'=>false,
 			'value'=>true,
@@ -300,7 +300,7 @@ class SettingsDictionary {
 		),
 		'contact_first_flag'=>array(
 			'realm'=>'sfdc',
-			'category'=>'main',
+			'category'=>'transfer',
 			'name'=>'contact_first_flag',
 			'required'=>false,
 			'value'=>true,
@@ -313,7 +313,7 @@ class SettingsDictionary {
 		),
 		'email_flag'=>array(
 			'realm'=>'sfdc',
-			'category'=>'main',
+			'category'=>'connection',
 			'name'=>'email_flag',
 			'required'=>false,
 			'value'=>true,
@@ -326,7 +326,7 @@ class SettingsDictionary {
 		),
 		'campaign_member_status_default'=>array(
 			'realm'=>'sfdc',
-			'category'=>'main',
+			'category'=>'transfer',
 			'name'=>'campaign_member_status_default',
 			'required'=>false,
 			'value'=>'Responded',
@@ -339,7 +339,7 @@ class SettingsDictionary {
 		),
 		'lead_source_default'=>array(
 			'realm'=>'sfdc',
-			'category'=>'main',
+			'category'=>'transfer',
 			'name'=>'lead_source_default',
 			'required'=>false,
 			'value'=>'',
@@ -352,7 +352,7 @@ class SettingsDictionary {
 		),
 		'campaign_type_default'=>array(
 			'realm'=>'sfdc',
-			'category'=>'main',
+			'category'=>'transfer',
 			'name'=>'campaign_type_default',
 			'required'=>false,
 			'value'=>'Responded',
@@ -365,7 +365,7 @@ class SettingsDictionary {
 		),
 		'primary_identifier'=>array(
 			'realm'=>'global',
-			'category'=>'main',
+			'category'=>'transfer',
 			'name'=>'primary_identifier',
 			'required'=>false,
 			'value'=>'Email',

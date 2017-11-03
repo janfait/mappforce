@@ -84,6 +84,10 @@ class SettingController extends Controller
 		$sfdc_settings = Setting::where([['realm','sfdc'],['editable',true]])->get();
 		$global_settings = Setting::where([['realm','global'],['editable',true]])->get();
 		
+		//collect settings indicating whether SFDC credentials have been supplied and app has been authorized
+		$connected_app = Setting::where(['category','connected_app'])->get();
+		$authorized = Setting::where('name','sfdc_refresh_token')->count();
+		
 		//loop through the settings and decrypt passwords
 		foreach($sfdc_settings as $setting){
 			if($setting->type=='password' && !empty($setting->value)){
@@ -100,6 +104,7 @@ class SettingController extends Controller
 
 		//render
 		$body = $this->view->fetch('admin/pages/settings.twig', [
+			'authorized'=> $authorized,
 			'cep_settings'=> $cep_settings,
 			'sfdc_settings'=> $sfdc_settings,
 			'global_settings'=> $global_settings,

@@ -47,7 +47,7 @@ abstract class Controller
 		$this->identifiers = array("email"=>"Email","identifier"=>"Id");
 		$this->valid_objects = array('contact','lead','campaign','any');
 		$this->error_messages = array(
-			'MISSING_REQUIRED_ATTRIBUTE' => 'Your request query string is missing a required parameter',
+			'MISSING_REQUIRED_PARAMETER' => 'Your request query string is missing a required parameter',
 			'OBJECT_NOT_ALLOWED' => 'Your request uses an invalid object attribute. The allowed objects are:'.implode(",",$this->valid_objects),
 			'IDENTIFER_NOT_ALLOWED' => 'Your request uses an invalid parameter. The allowed identifiers are:'.implode(",",$this->identifiers),
 			'MISSING_REQUIRED_FIELD' => 'Your request body is missing a required field.'
@@ -58,6 +58,10 @@ abstract class Controller
 		$this->default_output = array('error'=>false,'error_message'=>'','payload'=>null);
 		$this->default_ui_status = array('error'=>false,'message'=>null,'success'=>false);
 		$this->mapping_exceptions = array('LeadId','ContactId','Status','Id');
+		
+		//connection settings
+		$this->sfdc_connection_settings = Setting::where([['realm','sfdc'],['category','connection']])->get();
+
 		//attempt sfdc login
 		$this->sfdc_login();
 
@@ -340,6 +344,15 @@ abstract class Controller
 					$sfdc_api_server = str_replace("{version}","latest",$sfdc_api_server);
 					//attach session ID and endpoint to the client directly, bypassing the login method
 					$this->sfdc_client->setEndpoint($sfdc_api_server);
+					
+					//set connection headers
+					/*
+					$sfdc_assignment_header = new \AssignmentRuleHeader("", false);
+					$this->sfdc_connection->setAssignmentRuleHeader($sfdc_assignment_header);
+					$sfdc_email_header = new \EmailHeader(false,false,true);
+					$this->sfdc_connection->setEmailHeader($sfdc_email_header);
+					*/
+					
 					try{
 						$this->sfdc_client->setSessionHeader($this->sfdc_settings['sfdc_access_token']);
 						$this->sfdc_session = true;

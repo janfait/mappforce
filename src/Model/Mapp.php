@@ -92,7 +92,7 @@ namespace Mapp;
       	}else if(is_null($params)){
       		return $u;
       	}else{
-      		return $this->errors->PARAMS_ERROR;
+      		return $this->errors['PARAMS_NOT_SUPPLIED'];
       	}
       }
       //serialize the body

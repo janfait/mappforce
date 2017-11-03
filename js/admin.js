@@ -10,15 +10,18 @@ $(function() {
 
 ///////////////////////EXPANDING DRAWER ON LOAD//////////////////////////////////////////////
 $(document).ready(function(){
-	/*
-	var drawer = $('.mdl-layout__drawer');
-	var obfuscator = $('.mdl-layout__obfuscator');
-	drawer.attr('aria-hidden',false);
-	drawer.attr('aria-expanded',true);
-	drawer.addClass('is-visible');
-	obfuscator.addClass('is-visible');
-	*/
-
+	
+	//update existing mapping sfdc type
+	$(".mapping-select").each(function(){
+		var opt = $(this).find("option:selected");
+		var sfdc_type = opt.data("type");
+		if(sfdc_type!=""){
+			var sfdc_restricted = opt.data("restricted"); 
+			var cell = $(this).parent().siblings(".sfdc_type");
+			var text = sfdc_type.toUpperCase();
+			cell.text(text);
+		}
+	})
 })
 
 
@@ -49,8 +52,7 @@ $(".table-toggle").click(function(e) {
     })
 	$(this).find(".button-icon").text(function(i, text){
           return text === "keyboard_arrow_up" ? "keyboard_arrow_down" : "keyboard_arrow_up";
-    })
-	
+    })	
 });
 
 ///////////////////////FORM HANDLER FOR MAPPING//////////////////////////////////////////////
@@ -107,9 +109,26 @@ $(function(){
         });
     });
 });
+///////////////////////EDIT BEHAVIOR FOR NEW MEMBER VALUES//////////////////////////////////////////////
+
+$(".input-new").on('keyup',function(){
+	var v = $(this).val();
+	$(this).siblings("input[name='cep_name']").val(v);
+	$(this).siblings("input[name='cep_api_name']").val("user.memberAttribute."+v);
+});
 
 ///////////////////////SFDC FIELD TYPE SEARCH UPON EDIT OF SFDC NAME/////////////////////////////
 
+$(".mapping-select").on('change',function(){
+	var opt = $(this).find("option:selected");
+	var sfdc_type = opt.data("type");
+	if(sfdc_type!=""){
+		var sfdc_restricted = opt.data("restricted"); 
+		var cell = $(this).parent().siblings(".sfdc_type");
+		var text = sfdc_type.toUpperCase();
+		cell.text(text);
+	}
+})
 
 
 ///////////////////////SORT BEHAVIOR FOR MDL TABLE///////////////////////////////////////////////

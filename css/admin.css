@@ -167,7 +167,6 @@ th.sort.desc:after {
 /*********************************************************/
   
 select {
-	font-family: 'FontAwesome', 'sans-serif'
 	cursor:pointer;
 	display: block;
 	width: 100%;
@@ -186,6 +185,28 @@ select {
 	appearance: none; 
 }
 
+/* Hide label */
+.mdl-selectfield label {display: none;}
+/* Use custom arrow */
+.mdl-selectfield select {appearance: none}
+.mdl-selectfield {
+  position: relative;
+    &:after {
+        position: absolute;
+        top: 0.75em;
+        right: 0.5em;
+        /* Styling the down arrow */
+        width: 0;
+        height: 0;
+        padding: 0;
+        content: '';
+        border-left: .25em solid transparent;
+        border-right: .25em solid transparent;
+        border-top: .375em solid $select-border-color;
+        pointer-events: none;
+    }
+}
+
 select > option {
 	padding:5px;
 	cursor:pointer;
@@ -195,9 +216,6 @@ select > option {
 	color:red;
 }
 
-.sfdc_restricted {
-	font-style:bold;
-}
 
 /*********************************************************/
 /*************** CODE OUTPUT *****************************/

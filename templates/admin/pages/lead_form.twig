@@ -1,0 +1,406 @@
+					{# -------------------------------------------------------------------------------- #}
+					{# -------------------------------Leads Standard Form-------------------------------#}
+					{# -------------------------------------------------------------------------------- #}
+					
+					
+					<form id="mapping_lead_standard" class="tabular-form" method="POST" action="{{base_url}}/admin/mapping/create">
+					
+					
+						<section class="section--center mdl-grid mdl-shadow--2dp white">
+								<div class="mdl-card mdl-cell mdl-cell--12-col">
+
+									<div class="section__text mdl-cell mdl-cell--6-col-desktop mdl-cell--3-col-tablet mdl-cell--3-col-phone">
+									  <h5>Standard Attributes</h5>
+									  Define mapping for CEP standard attributes. Your mapping has to include either Email or Identifier.
+									</div>
+
+									{% if error %}
+										<div class="mdl-components__warning">
+											<b>Error:</b>
+											{{message}}
+										</div>
+									{% endif %}
+									
+									{% if success %}
+										<div class="mdl-components__success">
+											{{message}}
+										</div>
+									{% endif %}
+									<hr>
+									<div class="section__text mdl-cell mdl-cell--6-col-desktop mdl-cell--3-col-tablet mdl-cell--3-col-phone">
+
+										<button type="button" class="table-toggle mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">
+											<span class="button-text">Expand</span>
+											<i class="material-icons button-icon">keyboard_arrow_down</i>
+										</button>
+										<button id="mapping_standard_submit" type="submit" class="hide-on-start mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">
+											Save
+										</button>
+										<button id="mapping_standard_clear" type="button" class="hide-on-start mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">
+											Clear
+										</button>
+									</div>								
+
+								</div>
+
+
+						</section>
+						
+						{# -------------------------------------------------------------------------------- #}
+						{# -------------------------------START Leads Standard Table -----------------------#}
+						{# -------------------------------------------------------------------------------- #}
+					
+						<table id="mapping_lead_standard_table" class="hide-on-start mdl-data-table mdl-js-data-table mdl-data-table--sortable mdl-shadow--2dp fullwidth" style="margin-left: auto; margin-right: auto; width: 100%;">
+							{# ------------Table Head--------------- #}
+							<thead>
+								<tr>
+									<th class="mdl-data-table__cell--non-numeric">Include
+										<div id="tt_lead_standard_1" class="icon material-icons">info</div>
+										<div class="mdl-tooltip" data-mdl-for="tt_lead_standard_1">
+											Include the attribute in mapping
+										</div>
+									</th>
+									<th class="mdl-data-table__cell--non-numeric sort" data-sort="cep">CEP Attribute</th>
+									<th class="mdl-data-table__cell--non-numeric sort" data-sort="cep_type">CEP Attribute Type</th>
+									<th class="mdl-data-table__cell--non-numeric">Mapping function
+										<div id="tt_lead_standard_2" class="icon material-icons">info</div>
+										<div class="mdl-tooltip" data-mdl-for="tt_lead_standard_2">
+											Decide how should the incoming <br> data be translated to Salesforce
+										</div>
+									</th>
+									<th class="mdl-data-table__cell--non-numeric sort" data-sort="sfdc">Salesforce Field</th>
+									<th class="mdl-data-table__cell--non-numeric">Salesforce Field Type</th>
+								</tr>
+							</thead>
+							<tbody class="list mapping-table">
+							{# ------------Attribute Loop--------------- #}
+							{% for cep_standard_attribute in cep_standard_attributes %}
+								<tr id="lead_{{ cep_standard_attribute.name|lower }}">
+									<td class="mdl-data-table__cell--non-numeric"><input type="checkbox" name="active" class="mdl-checkbox__input" {% if cep_standard_attribute.lead_active == true %} checked {% endif %}></td>
+									<td class="mdl-data-table__cell--non-numeric cep">
+										{{ cep_standard_attribute.name }}
+										<input type="hidden" class="form-control" name="cep" value="{{ cep_standard_attribute.name }}">
+										<input type="hidden" class="form-control" name="cep_name" value="{{ cep_standard_attribute.name }}">
+										<input type="hidden" class="form-control" name="cep_api_name" value="user.{{ cep_standard_attribute.name }}">
+										<input type="hidden" class="form-control" name="cep_attr_type" value="standard">
+										<input type="hidden" class="form-control" name="cep_object" value="user">
+										<input type="hidden" class="form-control" name="sfdc_object" value="lead">
+									</td>
+									<td class="mdl-data-table__cell--non-numeric cep_type">{{ cep_standard_attribute.type }}</td>
+									
+									<td class="mdl-data-table__cell--non-numeric sfdc mdl-selectfield">
+										<select id="sfdc_function{{ cep_standard_attribute.name }}" name="sfdc_function">
+											<option value="insert" {% if "insert"== cep_standard_attribute.lead_function %} selected {% endif %}>Insert</option>
+											<option value="concat_comma" {% if "concat_comma"== cep_standard_attribute.lead_function %} selected {% endif %}>Concatenate to (,)</option>
+											<option value="concat_semi" {% if "concat_semi"== cep_standard_attribute.lead_function %} selected {% endif %}>Concatenate to (;)</option>
+											<option value="add" {% if "add"== cep_standard_attribute.lead_function %} selected {% endif %}>Add (+)</option>
+											<option value="sub" {% if "sub"== cep_standard_attribute.lead_function %} selected {% endif %}>Subtract (-)</option>
+										</select>
+									</td>
+									
+									<td class="mdl-data-table__cell--non-numeric sfdc mdl-selectfield">
+										<select id="sfdc_name_for_{{ cep_standard_attribute.name|lower }}" class="mapping-select" name="sfdc_name">
+											<option value="" data-type="" data-restricted="">-</option>
+											{% for sfdc_lead_field in sfdc_lead_fields|sort %}
+												<option data-type="{{sfdc_lead_field.type}}" data-restricted="{{sfdc_lead_field.restricted}}"
+													class="{% if sfdc_lead_field.required and not sfdc_lead_field.hasdefault %} sfdc_required {% endif %} {% if sfdc_lead_field.restricted %} sfdc_restricted {% endif %}" 
+													value="{{sfdc_lead_field.name}}" {% if sfdc_lead_field.name==cep_standard_attribute.lead %} selected {% endif %}>
+													{{sfdc_lead_field.label}}
+												</option>
+											{% endfor %}
+										</select>
+									</td>
+									
+									<td class="mdl-data-table__cell--non-numeric sfdc_type"> - </td>
+								</tr>
+							{% endfor %}
+							</tbody>
+						</table>
+						
+						{# -------------------------------------------------------------------------------- #}
+						{# -------------------------------END Leads Standard Table -------------------------#}
+						{# -------------------------------------------------------------------------------- #}
+						
+					</form>		
+
+				{# -------------------------------------------------------------------------------- #}
+				{# -------------------------------END Leads Standard Form---------------------------#}
+				{# -------------------------------------------------------------------------------- #}
+				
+				<br>
+				
+				{# -------------------------------------------------------------------------------- #}
+				{# -------------------------------Leads Custom Form-------------------------------#}
+				{# -------------------------------------------------------------------------------- #}
+					
+					
+					<form id="mapping_lead_custom" class="tabular-form" method="POST" action="{{base_url}}/admin/mapping/create">
+					
+					
+						<section class="section--center mdl-grid mdl-shadow--2dp white">
+								<div class="mdl-card mdl-cell mdl-cell--12-col">
+
+									<div class="section__text mdl-cell mdl-cell--6-col-desktop mdl-cell--3-col-tablet mdl-cell--3-col-phone">
+									  <h5>Custom Attributes</h5>
+									  Define mapping for CEP custom attributes. 
+									</div>
+
+									{% if error %}
+										<div class="mdl-components__warning">
+											<b>Error:</b>
+											{{message}}
+										</div>
+									{% endif %}
+									
+									{% if success %}
+										<div class="mdl-components__success">
+											{{message}}
+										</div>
+									{% endif %}
+									<hr>
+									<div class="section__text mdl-cell mdl-cell--6-col-desktop mdl-cell--3-col-tablet mdl-cell--3-col-phone">
+										<button type="button" class="table-toggle mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">
+											<span class="button-text">Expand</span>
+											<i class="material-icons button-icon">keyboard_arrow_down</i>
+										</button>
+										<button id="mapping_custom_submit" type="submit" class="hide-on-start mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">
+											Save
+										</button>
+										<button id="mapping_custom_clear" type="button" class="hide-on-start mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">
+											Clear
+										</button>
+									</div>								
+
+								</div>
+						</section>
+						
+						{# -------------------------------------------------------------------------------- #}
+						{# -------------------------------START Leads Custom Table -------------------------#}
+						{# -------------------------------------------------------------------------------- #}
+					
+						<table class="hide-on-start mdl-data-table mdl-js-data-table mdl-data-table--sortable mdl-shadow--2dp fullwidth" style="margin-left: auto; margin-right: auto; width: 100%;">
+							<thead>
+								<tr>
+									<th class="mdl-data-table__cell--non-numeric">Include
+										<div id="tt_lead_standard_1" class="icon material-icons">info</div>
+										<div class="mdl-tooltip" data-mdl-for="tt_lead_standard_1">
+											Include the attribute in mapping
+										</div>
+									</th>
+									<th class="mdl-data-table__cell--non-numeric sort" data-sort="cep">CEP Attribute</th>
+									<th class="mdl-data-table__cell--non-numeric sort" data-sort="cep_type">CEP Attribute Type</th>
+									<th class="mdl-data-table__cell--non-numeric">Mapping function
+										<div id="tt_lead_standard_2" class="icon material-icons">info</div>
+										<div class="mdl-tooltip" data-mdl-for="tt_lead_standard_2">
+											Decide how should the incoming <br> data be translated to Salesforce
+										</div>
+									</th>
+									<th class="mdl-data-table__cell--non-numeric sort" data-sort="sfdc">Salesforce Field</th>
+									<th class="mdl-data-table__cell--non-numeric">Salesforce Field Type</th>
+								</tr>
+							</thead>
+							<tbody class="list mapping-table">
+							{# ------------Attribute Loop--------------- #}
+							{% if cep_custom_attributes %}
+							{% for cep_custom_attribute in cep_custom_attributes|sort %}
+								<tr id="lead_{{ cep_custom_attribute.name|lower }}">
+									<td class="mdl-data-table__cell--non-numeric"><input type="checkbox" name="active" class="mdl-checkbox__input" {% if cep_custom_attribute.lead_active == true %} checked {% endif %}></td>
+									<td class="mdl-data-table__cell--non-numeric cep">
+										{{ cep_custom_attribute.name }}
+										<input type="hidden" class="form-control" name="cep" value="{{ cep_custom_attribute.name }}">
+										<input type="hidden" class="form-control" name="cep_name" value="{{ cep_custom_attribute.name }}">
+										<input type="hidden" class="form-control" name="cep_api_name" value="user.CustomAttribute.{{ cep_custom_attribute.name }}">
+										<input type="hidden" class="form-control" name="cep_attr_type" value="custom">
+										<input type="hidden" class="form-control" name="cep_object" value="user">
+										<input type="hidden" class="form-control" name="sfdc_object" value="lead">
+									</td>
+									<td class="mdl-data-table__cell--non-numeric cep_type">{{ cep_custom_attribute.type }}</td>
+									
+									<td class="mdl-data-table__cell--non-numeric sfdc mdl-selectfield">
+										<select id="sfdc_function{{ cep_custom_attribute.name }}" name="sfdc_function">
+											<option value="insert" {% if "insert"== cep_custom_attribute.lead_function %} selected {% endif %}>Insert</option>
+											<option value="concat_comma" {% if "concat_comma"== cep_custom_attribute.lead_function %} selected {% endif %}>Concatenate to (,)</option>
+											<option value="concat_semi" {% if "concat_semi"== cep_custom_attribute.lead_function %} selected {% endif %}>Concatenate to (;)</option>
+											<option value="add" {% if "add"== cep_custom_attribute.lead_function %} selected {% endif %}>Add (+)</option>
+											<option value="sub" {% if "sub"== cep_custom_attribute.lead_function %} selected {% endif %}>Subtract (-)</option>
+										</select>
+									</td>
+									
+									<td class="mdl-data-table__cell--non-numeric sfdc mdl-selectfield">
+										<select id="sfdc_name_for_{{ cep_custom_attribute.name|lower }}" class="mapping-select" name="sfdc_name">
+											<option value="" data-type="" data-restricted="">-</option>
+											{% for sfdc_lead_field in sfdc_lead_fields|sort %}
+												<option data-type="{{sfdc_lead_field.type}}" data-restricted="{{sfdc_lead_field.restricted}}" class="{% if sfdc_lead_field.required and not sfdc_lead_field.hasdefault %} sfdc_required {% endif %}" {% if sfdc_lead_field.name==cep_custom_attribute.lead %} selected {% endif %}>{{sfdc_lead_field.label}}</option>
+											{% endfor %}
+										</select>
+									</td>
+									
+									<td class="mdl-data-table__cell--non-numeric sfdc_type"></td>
+								</tr>
+							{% endfor %}
+							{% endif %}
+							</tbody>
+						</table>
+						
+						{# -------------------------------------------------------------------------------- #}
+						{# -------------------------------END Leads Custom Table ---------------------------#}
+						{# -------------------------------------------------------------------------------- #}
+						
+						
+					</form>	
+					
+					
+				{# -------------------------------------------------------------------------------- #}
+				{# -------------------------------END Leads Custom Form-----------------------------#}
+				{# -------------------------------------------------------------------------------- #}
+
+					<br>
+					
+				{# -------------------------------------------------------------------------------- #}
+				{# -------------------------------START Leads Member Form---------------------------#}
+				{# -------------------------------------------------------------------------------- #}
+
+					<form id="mapping_lead_member" class="tabular-form"  method="POST" action="{{base_url}}/admin/mapping/create">
+					
+						<section class="section--center mdl-grid mdl-shadow--2dp white">
+								<div class="mdl-card mdl-cell mdl-cell--12-col">
+
+									<div class="section__text mdl-cell mdl-cell--6-col-desktop mdl-cell--3-col-tablet mdl-cell--3-col-phone">
+									  <h5>Member Attributes</h5>
+									  Define mapping for CEP member attributes and other constant values. 
+									</div>
+
+									{% if error %}
+										<div class="mdl-components__warning">
+											<b>Error:</b>
+											{{message}}
+										</div>
+									{% endif %}
+									
+									{% if success %}
+										<div class="mdl-components__success">
+											{{message}}
+										</div>
+									{% endif %}
+									<hr>
+									<div class="section__text mdl-cell mdl-cell--6-col-desktop mdl-cell--3-col-tablet mdl-cell--3-col-phone">
+										<button type="button" class="table-toggle mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">
+											<span class="button-text">Expand</span>
+											<i class="material-icons button-icon">keyboard_arrow_down</i>
+										</button>
+										<button id="mapping_member_submit" type="submit" class="hide-on-start mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">
+											Save
+										</button>
+									</div>								
+
+								</div>
+								
+						{# -------------------------------------------------------------------------------- #}
+						{# -------------------------------START Leads Member Table -------------------------#}
+						{# -------------------------------------------------------------------------------- #}
+					
+						<table class="hide-on-start mdl-data-table mdl-js-data-table mdl-data-table--sortable mdl-shadow--2dp fullwidth" style="margin-left: auto; margin-right: auto; width: 100%;">
+							<thead>
+								<tr>
+									<th class="mdl-data-table__cell--non-numeric">Include
+										<div id="tt_lead_standard_1" class="icon material-icons">info</div>
+										<div class="mdl-tooltip" data-mdl-for="tt_lead_standard_1">
+											Include the attribute in mapping
+										</div>
+									</th>
+									<th class="mdl-data-table__cell--non-numeric sort" data-sort="cep">CEP Attribute</th>
+									<th class="mdl-data-table__cell--non-numeric sort" data-sort="cep_type">CEP Attribute Type</th>
+									<th class="mdl-data-table__cell--non-numeric">Mapping function
+										<div id="tt_lead_standard_2" class="icon material-icons">info</div>
+										<div class="mdl-tooltip" data-mdl-for="tt_lead_standard_2">
+											Decide how should the incoming <br> data be translated to Salesforce
+										</div>
+									</th>
+									<th class="mdl-data-table__cell--non-numeric sort" data-sort="sfdc">Salesforce Field</th>
+									<th class="mdl-data-table__cell--non-numeric">Salesforce Field Type</th>
+								</tr>
+							</thead>
+							<tbody class="list mapping-table">
+							{# ------------Attribute Loop--------------- #}
+							{% if cep_member_attributes %}
+							{% for cep_member_attribute in cep_member_attributes|sort %}
+								<tr id="lead_{{ cep_member_attribute.name|lower }}">
+									<td class="mdl-data-table__cell--non-numeric"><input type="checkbox" name="active" class="mdl-checkbox__input" {% if cep_member_attribute.lead_active == true %} checked {% endif %}></td>
+									<td class="mdl-data-table__cell--non-numeric cep">
+										{{ cep_member_attribute.cep }}
+										<input type="hidden" name="cep_name" value="">
+										<input type="hidden" name="cep_attr_type" value="member">
+										<input type="hidden" name="cep_object" value="member">
+										<input type="hidden" name="cep_api_name" value="{{ cep_member_attribute.cep_api_name }}">
+										<input type="hidden" name="sfdc_object" value="lead">
+									</td>
+									<td class="mdl-data-table__cell--non-numeric cep_type">STRING</td>
+									
+									<td class="mdl-data-table__cell--non-numeric sfdc mdl-selectfield">
+										<select id="sfdc_function{{ cep_member_attribute.name }}" name="sfdc_function">
+											<option value="insert" {% if "insert"== cep_member_attribute.lead_function %} selected {% endif %}>Insert</option>
+											<option value="concat_comma" {% if "concat_comma"== cep_member_attribute.lead_function %} selected {% endif %}>Concatenate to (,)</option>
+											<option value="concat_semi" {% if "concat_semi"== cep_member_attribute.lead_function %} selected {% endif %}>Concatenate to (;)</option>
+											<option value="add" {% if "add"== cep_member_attribute.lead_function %} selected {% endif %}>Add (+)</option>
+											<option value="sub" {% if "sub"== cep_member_attribute.lead_function %} selected {% endif %}>Subtract (-)</option>
+										</select>
+									</td>
+									
+									<td class="mdl-data-table__cell--non-numeric sfdc mdl-selectfield">
+										<select id="sfdc_name_for_{{ cep_member_attribute.name|lower }}" class="mapping-select" name="sfdc_name">
+											<option value="" data-type="" data-restricted="">-</option>
+											{% for sfdc_lead_field in sfdc_lead_fields|sort %}
+												<option class="{% if sfdc_lead_field.required and not sfdc_lead_field.hasdefault %} sfdc_required {% endif %}" {% if sfdc_lead_field.name==cep_member_attribute.lead %} selected {% endif %}>{{sfdc_lead_field.label}}</option>
+											{% endfor %}
+										</select>
+									</td>
+									
+									<td class="mdl-data-table__cell--non-numeric sfdc_type"> - </td>
+								</tr>
+							{% endfor %}
+							{% endif %}
+								<hr>
+								<tr id="lead_member_new">
+									<td class="mdl-data-table__cell--non-numeric"><input type="checkbox" name="active" class="mdl-checkbox__input" checked></td>
+									<td class="mdl-data-table__cell--non-numeric cep">
+										<input id="lead_member_input_news" class="input-new" type="text" name="cep" required>
+										<input type="hidden" name="cep_name">
+										<input type="hidden" name="cep_attr_type" value="member">
+										<input type="hidden" name="cep_object" value="member">
+										<input type="hidden" name="cep_api_name" value="">
+										<input type="hidden" name="sfdc_object" value="lead">
+									</td>
+									<td class="mdl-data-table__cell--non-numeric cep_type">STRING</td>
+									
+									<td class="mdl-data-table__cell--non-numeric sfdc mdl-selectfield">
+										<select id="sfdc_function_member_new" name="sfdc_function">
+											<option value="insert" selected>Insert</option>
+											<option value="concat_comma">Concatenate to (,)</option>
+											<option value="concat_semi">Concatenate to (;)</option>
+										</select>
+									</td>
+									
+									<td class="mdl-data-table__cell--non-numeric sfdc mdl-selectfield">
+										<select id="sfdc_name_for_{{ cep_member_attribute.name|lower }}" class="mapping-select" name="sfdc_name" required>
+											<option value="" data-type="" data-restricted="">-</option>
+											{% for sfdc_lead_field in sfdc_lead_fields|sort %}
+												<option class="{% if sfdc_lead_field.required and not sfdc_lead_field.hasdefault %} sfdc_required {% endif %}" {% if sfdc_lead_field.name==cep_member_attribute.lead %} selected {% endif %}>{{sfdc_lead_field.label}}</option>
+											{% endfor %}
+										</select>
+									</td>
+									
+									<td class="mdl-data-table__cell--non-numeric sfdc_type"> - </td>
+								</tr>
+							</tbody>
+						</table>
+								
+									
+									
+
+							
+								
+						</section>
+					</form>
+			{# -------------------------------------------------------------------------------- #}
+			{# -------------------------------END Leads Member Form---------------------------#}
+			{# -------------------------------------------------------------------------------- #}

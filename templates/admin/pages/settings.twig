@@ -81,17 +81,18 @@
 												Save
 											</button>
 											<!-- Submission -->
-											<button id="setting_sfdc_reset" type="submit" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">
-												Reset
-											</button>
-											<!-- Submission -->
-											<button id="setting_sfdc_test_connection" type="button" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">
-												Test Connection
-											</button>
-											<!-- Submission -->
-											<button id="setting_sfdc_test_oauth_connection" type="button" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">
-												Authorize App
-											</button>
+											{% if authorized %}
+												<button id="setting_sfdc_test_connection" type="button" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">
+													Test Connection
+												</button>
+											{% endif %}
+											{% if not authorized %}
+												<button id="setting_sfdc_test_oauth_connection" type="button" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">
+													Authorize App
+												</button>
+											{% endif %}
+
+
 											</form>
 										</div>	
 									</div>
@@ -179,11 +180,7 @@
 
 				</div>
 			</section>
-			<section class="mdl-layout__tab-panel settings" id="settings-global">
-				<div class="ui-page-content">
-				
-				</div>
-			</section>
+
 
 	</div>
 </main>

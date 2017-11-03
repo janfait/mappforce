@@ -62,6 +62,8 @@ $app->group('/api', function() {
 	$this->group('/cep', function() {
 		$this->get('', 'MappIntegrator\Controller\ApiController:cepRoot');
 		$this->get('/', 'MappIntegrator\Controller\ApiController:cepRoot');
+		$this->get('/contact/get','MappIntegrator\Controller\ApiController:cepGetContact');
+		$this->post('/contact/upsert','MappIntegrator\Controller\ApiController:cepUpsertContact');
 	});
 	
 	///////////////////////////////////////////////////////////
@@ -76,12 +78,10 @@ $app->group('/api', function() {
 		$this->get('/query', 'MappIntegrator\Controller\ApiController:sfdcQuery');
 		//run a query
 		$this->get('/search', 'MappIntegrator\Controller\ApiController:sfdcSearch');
-		//describe the defined object
-		//$this->get('/{object}/describe', 'MappIntegrator\Controller\ApiController:sfdcObject');
 		//describe the defined object fields
 		$this->get('/{object}/fields', 'MappIntegrator\Controller\ApiController:sfdcObjectFields');
 		//map
-		$this->post('/{object}/map', 'MappIntegrator\Controller\ApiController:sfdcMap');
+		$this->get('/{object}/map', 'MappIntegrator\Controller\ApiController:sfdcMap');
 		//upsert the defined object
 		$this->post('/{object}/upsert', 'MappIntegrator\Controller\ApiController:sfdcUpsert');
 		//generic upsert by method

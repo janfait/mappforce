@@ -2,6 +2,8 @@
 
 use \MappIntegrator\Setting as Setting;
 use \MappIntegrator\CepUser as CepUser;
+use Slim\Http\Request;
+use Slim\Http\Response;
 
 // Authenticator using Mapp /systemuser domain to get user data
 class MappApiAuthenticator
@@ -11,8 +13,7 @@ class MappApiAuthenticator
         $this->container = $container;
     }
 	
-	
-	private function store_user($data){
+	private function storeUser($data){
 		//update or create the user by instance and username
 		$user = CepUser::updateOrCreate([
 			'instance'=>$data['instance'],
@@ -20,30 +21,34 @@ class MappApiAuthenticator
 		],$data);
 	}
 	
+	private function validateJson($body){
+		 json_decode($body);
+	     return (json_last_error() == JSON_ERROR_NONE);
+	}
+
+	private function renderError(Request $request, Response $response, $message = "Authentication failed", $status = 401){
+		$output = array("error" => true);
+		$output['error_message'] = $message;
+		$response = $response->withStatus($status)->withHeader("WWW-Authenticate", sprintf('Basic realm="%s"',"MappForce"))->withJson($output);
+		return $response;
+	}
+	
     public function __invoke($request, $response, $next)
     {
-		$host = $request->getUri()->getHost();
-        $scheme = $request->getUri()->getScheme();
-        $server_params = $request->getServerParams();
-		$realm = "MappForce";
+		$host = $request -> getUri()->getHost();
+        $scheme = $request -> getUri()->getScheme();
+        $server_params = $request -> getServerParams();
+		$body = $request ->getBody();
+		$post = $request -> isPost();
         $user = false;
         $password = false;
-		$output = array("error" => true, "error_message"=>"Authentication failed");
-		
-		//todo: allow access controls
 
 		//collect instance and username
 		if (isset($server_params["PHP_AUTH_USER"])) {
 			$user_data = $server_params["PHP_AUTH_USER"];
 			$user_data = explode('|', $user_data);
-			
 			if(count($user_data)<2){
-				$output['error_message'] = "Authentication failed: Your username has to be in the following format system_name|username:password, f.e. mysystem|my@email.com:secretpassword";
-				$response = $response
-					->withStatus(401)
-					->withHeader("WWW-Authenticate", sprintf('Basic realm="%s"', $realm))
-					->withJson($output);
-				return $response;
+				return $this->renderError($request,$response,"Authentication failed: Your username has to be in the following format system_name|username:password",401);
 			}
 			$instance = $user_data[0];
 			$user = $user_data[1];
@@ -54,11 +59,11 @@ class MappApiAuthenticator
 		}
 		//challenge
 		if(false === $user | false === $password){
-			$response = $response
-                ->withStatus(401)
-                ->withHeader("WWW-Authenticate", sprintf('Basic realm="%s"', $realm))
-				->withJson($output);
-			return $response;
+			return $this->renderError($request,$response);
+		}
+		//validate json body
+		if($post & !$this->validateJson($body)){
+			return $this->renderError($request,$response,"Invalid JSON body",400);
 		}
 		//collect user
 		if($this->container->has('mappCep')) {
@@ -71,15 +76,11 @@ class MappApiAuthenticator
 			
 			//challenge again if authentication failed
 			if(true === $mapp_cep_user['error']){
-				$response = $response
-					->withStatus(401)
-					->withHeader("WWW-Authenticate", sprintf('Basic realm="%s"', $realm))
-					->withJson($output);
-				return $response;
+				return $this->renderError($request,$response);
 			}else{
 				//update or create user
 				if(false){
-					$this->store_user(
+					$this->storeUser(
 						array(
 							'instance'=>$instance,
 							'username'=>$user,
@@ -93,8 +94,7 @@ class MappApiAuthenticator
 			}
 			
         }else{
-			$output = array("error" => true, "error_message"=>"Interal Server Error");
-			return $response->withStatus(500)->withJson($output);
+			return $this->renderError($request,$response,"Internal Server Error",500);
 		}
 
         $response =  $next($request, $response);
@@ -118,7 +118,7 @@ class SessionAuthenticator {
 			if (isset($_SESSION['LAST_ACTIVITY']) && (time() - $_SESSION['LAST_ACTIVITY'] > getenv('IDLE_TIMEOUT'))) {
 				session_unset();
 				session_destroy();
-				return $response->withStatus(401)->withRedirect($this->container->router->pathFor('showLogin',['error'=>true,'error_message'=>'Your session has expired.']));
+				return $response->withStatus(401)->withRedirect($this->container->router->pathFor('showLogin',[],['error'=>true,'error_message'=>'Your session has expired.','from_page'=>$request->getAttribute('route')]));
 			}
 			//register last activity
 			$_SESSION['LAST_ACTIVITY'] = time();
