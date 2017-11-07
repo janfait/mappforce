@@ -96,7 +96,7 @@
 												<div class="mdl-tooltip" data-mdl-for="tt_sysname">
 												A part of the URL uniquely identifying your CEP system.
 											</div>
-										</div></br>
+										</div>
 										<div class="mdl-cell mdl-cell--6-col">
 											<div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
 													<input class="mdl-textfield__input" type="text" id="username" name="username" {% if debug %}value="mapp-force-1@mapp.com"{% endif %} data-required>
@@ -124,6 +124,9 @@
 											</div>
 										</div>
 									</div>
+									
+									<input type="hidden" name="{{csfr.namekey}}" value="{{csfr.name}}">
+									<input type="hidden" name="{{csfr.valuekey}}" value="{{csfr.value}}">
 
 									<div class="mdl-card__actions">
 										<div class="section__text mdl-cell mdl-cell--12-col-desktop mdl-cell--6-col-tablet mdl-cell--3-col-phone" >

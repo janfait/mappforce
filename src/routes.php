@@ -2,9 +2,9 @@
 
 //login and logout routes
 $app->get('/', 'MappIntegrator\Controller\AdminController:goLogin');
-$app->get('/login', 'MappIntegrator\Controller\AdminController:showLogin')->setName('showLogin');
-$app->post('/login', 'MappIntegrator\Controller\AdminController:login')->setName('login');
-$app->get('/logout', 'MappIntegrator\Controller\AdminController:logout')->setName('logout');
+$app->get('/login', 'MappIntegrator\Controller\AdminController:showLogin')->setName('showLogin')->add($container->get('csrf'));
+$app->post('/login', 'MappIntegrator\Controller\AdminController:login')->setName('login')->add($container->get('csrf'));
+$app->get('/logout', 'MappIntegrator\Controller\AdminController:logout')->setName('logout')->add($container->get('csrf'));
 
 //route admin group requests and validate by session
 $app->group('/admin', function() {
@@ -41,7 +41,7 @@ $app->group('/admin', function() {
 	$this->post('/mapping/delete', 'MappIntegrator\Controller\AdminController:deleteMapping')->setName('deleteMapping');
 
 
-})->add( new SessionAuthenticator($container));
+})->add( new SessionAuthenticator($container))->add($container->get('csrf'));
 
 
 ///////////////////////////////////////////////////////////
@@ -81,9 +81,9 @@ $app->group('/api', function() {
 		//describe the defined object fields
 		$this->get('/{object}/fields', 'MappIntegrator\Controller\ApiController:sfdcObjectFields');
 		//map
-		$this->get('/{object}/map', 'MappIntegrator\Controller\ApiController:sfdcMap');
+		$this->post('/{object}/map', 'MappIntegrator\Controller\ApiController:sfdcMap');
 		//upsert the defined object
-		$this->post('/{object}/upsert', 'MappIntegrator\Controller\ApiController:sfdcUpsert');
+		$this->post('/upsert', 'MappIntegrator\Controller\ApiController:sfdcUpsert');
 		//generic upsert by method
 		$this->post('/{object}/upsertby', 'MappIntegrator\Controller\ApiController:sfdcUpsertBy');
 		//create a defined object

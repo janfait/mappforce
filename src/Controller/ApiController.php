@@ -23,6 +23,20 @@ class ApiController extends Controller
 				'call_stack' => $this->call_stack
 			);
 		}
+		
+		$csfr = array();
+		$csfr['namekey'] = $this->container->csrf->getTokenNameKey();
+		$csfr['valuekey'] = $this->container->csrf->getTokenValueKey();
+		$csfr['name'] = $request->getAttribute($csfr['namekey']);
+		$csfr['value'] = $request->getAttribute($csfr['valuekey']);
+		
+		//add standard body elements
+		$body['debug'] = $this->container->get('settings')['debug'];
+		$body['user'] = $request->getAttribute('user');
+		$body['csfr'] = $csfr;
+
+		$this->container->logger->info(json_encode($data));
+		
 		return $response->withJson($data,$status);
 	}
 	
@@ -42,6 +56,9 @@ class ApiController extends Controller
 				'call_stack' => $this->call_stack
 			);
 		}
+		
+		$this->container->logger->error(json_encode($data));
+		
 		return $response->withJson($data,$status);
 		
 	}
@@ -72,7 +89,7 @@ class ApiController extends Controller
 		$output = $this->default_output;
 		
 		$router = $this->container->router->getRoutes();
-		$routes = array("Welcome to MappForce, these are the possible API endpoints");s
+		$routes = array("Welcome to MappForce, these are the supported API endpoints");
 		foreach($router as $r){
 			if(strpos($r->getPattern(), '/api/') !== false){
 				$routes[] = array('method'=>$r->getMethods()[0],'path'=>$r->getPattern());	
@@ -184,6 +201,10 @@ class ApiController extends Controller
         return $this->renderOutput($request,$response,$output);
 	}
 	
+	private function sfdcGetDefaultStatus(){
+		return Setting::where('name','campaign_member_status_default')->first()->value;
+	}
+
 	public function sfdcMap(Request $request, Response $response, $args)
 	{	
 		//get body of request and request params
@@ -210,7 +231,7 @@ class ApiController extends Controller
 		//get mapping from database for the particular object, key by cep_api_name
 		$mapping = Mapping::where('sfdc_object',$object)->get()->keyBy('cep_api_name')->toArray();
 		//create fields array
-		$fields = [];		
+		$fields = [];
 		//collect the fields from request body and map them according to existing mapping
 		foreach($body as $item=>$value){
 			if(array_key_exists($item,$mapping)){
@@ -307,6 +328,9 @@ class ApiController extends Controller
 		if(!$this->_validateObject($object)){
 			$this->renderError($request,$response,'OBJECT_NOT_ALLOWED');
 		}
+		if(!isset($query['status'])){
+			$status = $this->sfdcGetDefaultStatus();
+		}
 		//attempt an upsert on the selected object
 		try {
 			$record = $this->_sfdcAddToCampaign($object,$object_id,$campaign_id,$status);
@@ -320,7 +344,7 @@ class ApiController extends Controller
 	}
 
 	
-	private function _sfdcAddToCampaign($object,$object_id,$campaign_id,$status)
+	private function _sfdcAddToCampaign($object,$object_id,$campaign_id,$status= null)
 	{
 		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
 		//define the membership object
@@ -533,9 +557,9 @@ class ApiController extends Controller
 				}
 				
 			} catch (\Exception $e) {
-				return array('contacts'=>null,'leads'=>null);	
+				return array('contacts'=>null,'leads'=>null,'query'=>$search_query,'query_result'=>$e->faultstring);	
 			}
-			return array('contacts'=>$contacts,'leads'=>$leads);
+			return array('contacts'=>$contacts,'leads'=>$leads,'query'=>$search_query,'query_result'=>$records);
 		}else{
 			return false;
 		}
@@ -549,12 +573,6 @@ class ApiController extends Controller
 		$query = $request->getQueryParams();
 		//prepare default output
 		$output = $this->default_output;
-		//collect the output
-		$object = $request->getAttribute('object');
-		//validate object
-		if(!$this->_validateObject($object)){
-			$this->renderError($request,$response,'OBJECT_NOT_ALLOWED');
-		}
 		//if identifier isn't set
 		if(!isset($query['identifier'])){
 			$this->renderError($request,$response,'MISSING_REQUIRED_PARAMETER');
@@ -583,7 +601,6 @@ class ApiController extends Controller
 		}else if(count($records['leads'])>0){
 			$object = 'lead';
 			$object_id = $records['leads'][0];
-			
 			$record = $this->_sfdcUpdate($object_id,$object,$body);
 		}else{
 			$record = $this->_sfdcCreate('Lead',$body);	
@@ -593,7 +610,7 @@ class ApiController extends Controller
 			
 			//if status empty, collect default status from database
 			if(!isset($body['campaign']['status'])){
-				$status = Setting::where('name','campaign_member_status_default')->first()->value;
+				$status = $this->sfdcGetDefaultStatus();
 			}else{
 				$status = $body['campaign']['status'];
 			}

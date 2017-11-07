@@ -307,6 +307,29 @@ abstract class Controller
 		return $response;
 	}
 	
+	private function _sfdc_collect_api_server(){
+		
+		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
+
+		$sfdc_api_server = Setting::where('name','sfdc')->first();
+		
+		if(!empty($sfdc_api_server)){
+			$sfdc_api_server = $this->_decrypt($sfdc_api_server->value,$this->settings['secret']);
+		}else{
+			$sfdc_identity = $this->_sfdc_collect_identity($this->sfdc_settings['sfdc_server_url']);
+			if(!isset($sfdc_identity['error'])){
+				$sfdc_api_server = $sfdc_identity['urls']['partner'];
+				$sfdc_api_server = str_replace("{version}","latest",$sfdc_api_server);
+			}else{
+				$sfdc_api_server = false;
+			}
+
+		}
+		$this->response_stack[] = array(__FUNCTION__=>$sfdc_api_server);
+		return $sfdc_api_server;
+
+	}
+	
 
 	
 	public function sfdc_login()
@@ -335,34 +358,24 @@ abstract class Controller
 			if($this->_sfdc_check_settings()){				
 				//if access token expired, request new one through a refresh token
 				$this->_sfdc_validate_access_token();
-				//call the identity service to retrieve api server url
-				$sfdc_identity = $this->_sfdc_collect_identity($this->sfdc_settings['sfdc_server_url']);
-				//if sfdc identity suceeds
-				if(!isset($sfdc_identity['error'])){
-					//collect the returned api server url
-					$sfdc_api_server = $sfdc_identity['urls']['partner'];
-					$sfdc_api_server = str_replace("{version}","latest",$sfdc_api_server);
+				//collect the returned api server url
+				$sfdc_api_server = $this->_sfdc_collect_api_server();
+				//set connection headers
+				/*
+				$sfdc_assignment_header = new \AssignmentRuleHeader("", false);
+				$this->sfdc_connection->setAssignmentRuleHeader($sfdc_assignment_header);
+				$sfdc_email_header = new \EmailHeader(false,false,true);
+				$this->sfdc_connection->setEmailHeader($sfdc_email_header);
+				*/
+				try{
 					//attach session ID and endpoint to the client directly, bypassing the login method
 					$this->sfdc_client->setEndpoint($sfdc_api_server);
-					
-					//set connection headers
-					/*
-					$sfdc_assignment_header = new \AssignmentRuleHeader("", false);
-					$this->sfdc_connection->setAssignmentRuleHeader($sfdc_assignment_header);
-					$sfdc_email_header = new \EmailHeader(false,false,true);
-					$this->sfdc_connection->setEmailHeader($sfdc_email_header);
-					*/
-					
-					try{
-						$this->sfdc_client->setSessionHeader($this->sfdc_settings['sfdc_access_token']);
-						$this->sfdc_session = true;
-					}catch(\Exception $e){
-						$this->sfdc_session = false;
-						var_dump($e->faultstring);
-						die();
-					}
-					
-					
+					$this->sfdc_client->setSessionHeader($this->sfdc_settings['sfdc_access_token']);
+					$this->sfdc_session = true;
+				}catch(\Exception $e){
+					$this->sfdc_session = false;
+					var_dump($e->faultstring);
+					die();
 				}
 			}
 				

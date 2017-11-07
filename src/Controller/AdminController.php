@@ -23,9 +23,17 @@ class AdminController extends Controller
 		if(empty($body)){
 			$body = $this->default_ui_status;
 		}
+		
+		$csrf = array();
+		$csrf['namekey'] = $this->container->csrf->getTokenNameKey();
+		$csrf['valuekey'] = $this->container->csrf->getTokenValueKey();
+		$csrf['name'] = $request->getAttribute($csrf['namekey']);
+		$csrf['value'] = $request->getAttribute($csrf['valuekey']);
+		
 		//add standard body elements
 		$body['debug'] = $this->container->get('settings')['debug'];
 		$body['user'] = $request->getAttribute('user');
+		$body['csrf'] = $csrf;
 		
 		//redirect to supplied pathName
 		if(empty($redirect)){
@@ -130,16 +138,17 @@ class AdminController extends Controller
 /////////////////////////////////////////////////////////////////////////////////////
 	public function createMapping(Request $request, Response $response, $args)
 	{
-		
 		$data = $request->getParsedBody();
-		
+
 		foreach($data as $row){
-			$mapping = Mapping::updateOrCreate([
-				'cep'=> $row['cep_name'],
-				'sfdc_object'=>$row['sfdc_object'],
-				'cep_attr_type'=>$row['cep_attr_type']
-			],$row);
-			$mapping->save();
+			if(isset($row['sfdc_name'])){
+				$mapping = Mapping::updateOrCreate([
+					'cep'=> $row['cep_name'],
+					'sfdc_object'=>$row['sfdc_object'],
+					'cep_attr_type'=>$row['cep_attr_type']
+				],$row);
+				$mapping->save();
+			}
 		}
 
 		return $response->withRedirect($this->container->router->pathFor('getMapping'));

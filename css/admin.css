@@ -109,6 +109,12 @@ th.sort.desc:after {
     color: #212121;
 }
 
+.input-new {
+	padding:10px;
+	margin:10px;
+	border:none;	
+}
+
 /*********************************************************/
 /*************** DIALOGS *********************************/
 /*********************************************************/
@@ -229,8 +235,6 @@ pre {
 	word-wrap: break-word;                 /* IE 5.5+ and up */
 	box-sizing: border-box;
 	width: 100%;
-	padding: 0;
-	margin: 0;
 	overflow: auto;
 	overflow-y: hidden;
 	font-size: 12px;
@@ -238,6 +242,7 @@ pre {
 	background: #efefef;
 	border: 1px solid #777;
 	padding: 10px;
+	margin:10px;
 	color: #333;
 }
 
@@ -266,11 +271,10 @@ pre {
     position: relative;
   }
   
-  .home-card-square > .mdl-card__title {
+.home-card-square > .mdl-card__title {
   color: #fff;
   height: 176px;
   background-color:#00bcd4;
-  /*background: url('../assets/demos/welcome_card.jpg') center / cover;*/
 }
 
 

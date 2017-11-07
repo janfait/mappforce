@@ -15,7 +15,7 @@ $(document).ready(function(){
 	$(".mapping-select").each(function(){
 		var opt = $(this).find("option:selected");
 		var sfdc_type = opt.data("type");
-		if(sfdc_type!=""){
+		if(typeof sfdc_type!='undefined'){
 			var sfdc_restricted = opt.data("restricted"); 
 			var cell = $(this).parent().siblings(".sfdc_type");
 			var text = sfdc_type.toUpperCase();
@@ -39,6 +39,23 @@ $(document).bind('ajaxStart',function () {
 $(document).on("click", "#settings-edit", function () {
 	 $(this).closest('tr').find('select').prop("disabled", false);
 	 $(this).hide();
+});
+
+///////////////////////ADD NEW FOR MEMBER TABLES ////////////////////////////////////////////
+
+$(".add-new").bind("click", function(e){
+	e.preventDefault();
+	var parent_table = $(this).closest('form').find('.mdl-data-table');
+	var rnd_id = 'member_new_'+Math.random().toString(36).substring(7);
+	$('.member-new').first().clone().attr('id',rnd_id).appendTo(parent_table);
+});
+
+//bind the remove action to any new row of a member attribute
+$(document).on('click', '.remove-new', function(e){
+	e.preventDefault();
+	if($('.remove-new').length>1){
+		$('.remove-new').last().closest('tr').remove();
+	}
 });
 
 ///////////////////////TABLE TOGGLE FOR MAPPING//////////////////////////////////////////////
@@ -65,6 +82,9 @@ $(function(){
 		var method = $(this).attr('method');
 		var data={};
 		var table = $(this).find('.mapping-table');
+		//add csfr
+		data['csrf_name'] = $("input[name='csrf_name']").val();
+		data['csrf_value'] = $("input[name='csrf_value']").val();
 		//loop through rows of mapping table and collect values to data array
 		table.find("tr").each(function(){
             var id = $(this).attr('id');
@@ -114,7 +134,7 @@ $(function(){
 $(".input-new").on('keyup',function(){
 	var v = $(this).val();
 	$(this).siblings("input[name='cep_name']").val(v);
-	$(this).siblings("input[name='cep_api_name']").val("user.memberAttribute."+v);
+	$(this).siblings("input[name='cep_api_name']").val("user.MemberAttribute."+v);
 });
 
 ///////////////////////SFDC FIELD TYPE SEARCH UPON EDIT OF SFDC NAME/////////////////////////////
@@ -122,7 +142,7 @@ $(".input-new").on('keyup',function(){
 $(".mapping-select").on('change',function(){
 	var opt = $(this).find("option:selected");
 	var sfdc_type = opt.data("type");
-	if(sfdc_type!=""){
+	if(typeof sfdc_type!='undefined'){
 		var sfdc_restricted = opt.data("restricted"); 
 		var cell = $(this).parent().siblings(".sfdc_type");
 		var text = sfdc_type.toUpperCase();
