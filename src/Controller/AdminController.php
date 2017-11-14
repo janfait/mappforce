@@ -157,8 +157,7 @@ class AdminController extends Controller
 /////////////////////////////////////////////////////////////////////////////////////	
 	public function getMapping(Request $request, Response $response, $args)
 	{
-		
-		
+
 		//populate mapp client from session todo: remove from controller methods to middleware/make common for all methods
 		$this->mapp_client->setInstance(
 			$this->_decrypt($_SESSION['INST'],$this->settings['secret'])
@@ -190,7 +189,8 @@ class AdminController extends Controller
 			$sfdc_contact_fields = $this->container->Sforce->getObjectFields($sfdc_contact);
 		}else{
 			$status['error'] = true;
-			$status['message'] = 'Failed to connect to Salesforce. Please set or review your credentials in Settings section.';
+			$status['message'] = $this->messages['NO_CONNECTION_SFDC'];
+			$status['success'] = false;
 			$sfdc_campaign_fields = array();
 			$sfdc_lead_fields = array();
 			$sfdc_contact_fields = array();
@@ -240,14 +240,17 @@ class AdminController extends Controller
 				$cep_member_attributes[$key]['contact_active'] = $contact_mapping[$value['cep']]['active'];
 				$cep_member_attributes[$key]['contact_function'] = $contact_mapping[$value['cep']]['sfdc_function'];
 			}
+			if(array_key_exists($value['cep'],$campaign_mapping)){
+				$cep_member_attributes[$key]['campaign'] = $campaign_mapping[$value['cep']]['sfdc_name'];
+				$cep_member_attributes[$key]['campaign_active'] = $campaign_mapping[$value['cep']]['active'];
+				$cep_member_attributes[$key]['campaign_function'] = $campaign_mapping[$value['cep']]['sfdc_function'];
+			}
 		} 
 		
 		//combine database and cep values for group attributes
 		foreach($cep_group_attributes as $key=>$value){
 			if(array_key_exists($value['name'],$campaign_mapping)){
 				$cep_group_attributes[$key]['campaign'] = $campaign_mapping[$value['name']]['sfdc_name'];
-				$cep_custom_attributes[$key]['campaign_active'] = $lead_mapping[$value['name']]['active'];
-				$cep_custom_attributes[$key]['campaign_function'] = $lead_mapping[$value['name']]['sfdc_function'];
 			}
 		}
 		
@@ -260,7 +263,9 @@ class AdminController extends Controller
 			'sfdc_campaign_fields' => $sfdc_campaign_fields,
 			'sfdc_lead_fields' => $sfdc_lead_fields,
 			'sfdc_contact_fields' => $sfdc_contact_fields,
-			'error' => $status['error']
+			'error' => $status['error'],
+			'message'=>$status['message'],
+			'success' => $status['success']
         );
 
         return $this->renderAdminUI($request,$response,'admin/pages/mapping.twig',$body,200);
@@ -309,6 +314,7 @@ class AdminController extends Controller
 		if(count($campaign_mapping)>0){
 			//prepare array
 			$json_map_campaign = [];
+			$json_map_campaign['status'] = Setting::where('name','campaign_member_status_default')->first()->value;
 			//for each mapping
 			foreach($campaign_mapping as $item=>$values){
 				//define a placeholder depending on the cep_attr_type (standard,custom)

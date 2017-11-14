@@ -88,15 +88,19 @@ $(function(){
 		//loop through rows of mapping table and collect values to data array
 		table.find("tr").each(function(){
             var id = $(this).attr('id');
-            var row = {};
-            $(this).find('input,select,textarea').each(function(i){
-				if($(this).attr('type')=='checkbox'){
-					row[$(this).attr('name')] = $(this).prop('checked');
-				}else{
-					row[$(this).attr('name')] = $(this).val();
-				}
-            });
-            data[id]=row;
+			var mapped = $(this).find("input[name='sfdc_name']").val();
+			if(mapped!=""){
+				var row = {};
+				$(this).find('input,select,textarea').each(function(i){
+					if($(this).attr('type')=='checkbox'){
+						row[$(this).attr('name')] = $(this).prop('checked');
+					}else{
+						row[$(this).attr('name')] = $(this).val();
+					}
+				});
+				data[id]=row;
+			}
+
         });
 		
 		//submit
@@ -168,17 +172,6 @@ $('input.search').on('keyup', function (e) {
 $('#user').click(function () {
     showDialog({
         title: 'User Profile',
-        text: $('#user-profile').html(),
-		positive: {
-			id: 'ok-button',
-			title: 'OK'
-		}
-	})
-});
-/////////////////////// HELP DIALOG//////////////////////////////////////////////////////////////////
-$('#help').click(function () {
-    showDialog({
-        title: 'Help',
         text: $('#user-profile').html(),
 		positive: {
 			id: 'ok-button',

@@ -44,8 +44,8 @@ class ApiController extends Controller
 		
 		$data = $this->default_output;
 		$data['error'] = true;
-		if(in_array($error_code,$this->error_messages)){
-			$data['error_message'] = $this->error_messages[$error_code];
+		if(in_array($error_code,$this->messages)){
+			$data['error_message'] = $this->messages[$error_code];
 		}else{
 			$data['error_message'] = $error_message;
 		}

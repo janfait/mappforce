@@ -30,11 +30,11 @@ class SettingController extends Controller
 		$this->_sfdc_collect_settings();
 		//check presence of authorization settings
 		if(!$this->_sfdc_check_authorization_settings()){
-			return $response->withRedirect($this->container->router->pathFor('getSetting',[],['error'=>true,'error_message'=>'missing_settings']));
+			return $response->withRedirect($this->container->router->pathFor('getSetting',[],['error'=>true,'message'=>'MISSING_SETTINGS']));
 		}
 		//if oauth client has not been initialized, pass back
 		if(is_null($this->sfdc_oauth_client)){
-			return $response->withRedirect($this->container->router->pathFor('getSetting',[],['error'=>true,'error_message'=>'no_oauth_client']));
+			return $response->withRedirect($this->container->router->pathFor('getSetting',[],['error'=>true,'message'=>'NO_OAUTH_CLIENT']));
 		}
 		//define scope, has to be identical to the connected app scope
 		$options = [
@@ -62,21 +62,21 @@ class SettingController extends Controller
 			    if (isset($_SESSION['STATE'])) {
 					unset($_SESSION['STATE']);
 				}
-			return $response->withRedirect($this->container->router->pathFor('getSetting',[],['error'=>true,'error_message'=>'missing_or_invalid_state']));
+			return $response->withRedirect($this->container->router->pathFor('getSetting',[],['error'=>true,'message'=>'INVALID_STATE']));
 		}
 		//check state
 		if(empty($authorization_code)){
-			return $response->withRedirect($this->container->router->pathFor('getSetting',[],['error'=>true,'error_message'=>'missing_authorization_code']));
+			return $response->withRedirect($this->container->router->pathFor('getSetting',[],['error'=>true,'message'=>'MISSING_AUTH_CODE']));;
 		}
 		//pass it to the oauth token collector
 		$oauth_token = $this->_sfdc_collect_oauth_token($authorization_code);
 		if($outh_token['error']){
-			return $response->withRedirect($this->container->router->pathFor('getSetting',[],['error'=>true,'error_message'=>'failed_oauth_request']));
+			return $response->withRedirect($this->container->router->pathFor('getSetting',[],['error'=>true,'message'=>'FAILED_OAUTH_REQUEST']));
 		}
 		//store the token elements
 		$storage_result = $this->_sfdc_store_oauth_token($oauth_token);
 		//go back to settings with message
-		return $response->withRedirect($this->container->router->pathFor('getSetting',[],['success'=>$storage_result]));
+		return $response->withRedirect($this->container->router->pathFor('getSetting',[],['success'=>$storage_result,'message'=>'AUTHORIZATION_SUCCESS']));
 	}
 	
 
@@ -98,8 +98,12 @@ class SettingController extends Controller
 		
 		//collect settings indicating whether SFDC credentials have been supplied and app has been authorized
 		$connected_app = Setting::where(['category','connected_app'])->get();
-		//collect
-		$authorized = Setting::where('name','sfdc_refresh_token')->get();
+		//collect refresh token to tell whether it was authorized
+		$has_token = Setting::where('name','sfdc_refresh_token')->first()->value;
+		$authorized = false;
+		if(!empty($has_token)){
+			$authorized = true;
+		}
 		
 		//loop through the settings and decrypt passwords
 		foreach($sfdc_settings as $setting){
@@ -117,10 +121,10 @@ class SettingController extends Controller
 		//collect success messages from oauth attempt
 		if(isset($query['error'])){
 			$status['error'] = boolval($query['error']);
-			$status['message'] = $query['error_message'];
+			$status['message'] = $this->messages[$query['message']];
 			$status['success'] = !$status['error'];
 		}
-
+		
 		//render
 		$body = $this->view->fetch('admin/pages/settings.twig', [
 			'csrf'=>$csrf,
@@ -143,6 +147,9 @@ class SettingController extends Controller
 		
 		$data = $request->getParsedBody();
 
+		
+		return $response->withJson($data);
+		
 		foreach($data as $item_key => $value){
 			
 			$setting = Setting::where('name',$item_key)->first();

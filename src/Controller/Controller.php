@@ -46,11 +46,17 @@ abstract class Controller
 		//initialize settings and constants
 		$this->identifiers = array("email"=>"Email","identifier"=>"Id");
 		$this->valid_objects = array('contact','lead','campaign','any');
-		$this->error_messages = array(
+		$this->messages = array(
 			'MISSING_REQUIRED_PARAMETER' => 'Your request query string is missing a required parameter',
 			'OBJECT_NOT_ALLOWED' => 'Your request uses an invalid object attribute. The allowed objects are:'.implode(",",$this->valid_objects),
 			'IDENTIFER_NOT_ALLOWED' => 'Your request uses an invalid parameter. The allowed identifiers are:'.implode(",",$this->identifiers),
-			'MISSING_REQUIRED_FIELD' => 'Your request body is missing a required field.'
+			'MISSING_REQUIRED_FIELD' => 'Your request body is missing a required field.',
+			'MISSING_SETTINGS' => 'Some required settings are not populated.',
+			'INVALID_STATE' => 'The response state parameter does not match the request. A security problem has occured.',
+			'NO_OAUTH_CLIENT' => 'The Salesforce Oauth Client has failed to load.',
+			'FAILED_OAUTH_REQUEST' => 'The request to the OAuth endpoint of Salesforce has failed.',
+			'AUTHORIZATION_SUCCESS' => 'MappForce app is now succesfully authorized against Salesforce',
+			'NO_CONNECTION_SFDC' => 'Failed to connect to Salesforce. Please set or review your connection in Settings section.'
 		);
 		$this->oauth = $this->settings['sfdc']['oauth'];
 		$this->call_stack = array();
