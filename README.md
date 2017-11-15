@@ -14,11 +14,15 @@ For illlustration, consider an event occuring in your Mapp CEP system, such as a
 
 ### Installation
 
-#### Server Requirements
+Clone the content of the project to your server and complete the following steps
 
-PHP 5.6+
-SOAP Extension
-SQLite Extension
+#### PHP Requirements
+
+- PHP 5.6+
+- php_sqlite3
+- php_pdo_sqlite
+- php_curl
+- php_soap
 
 #### .env file
 
@@ -36,8 +40,8 @@ CONTACT="jan.fait@mapp.com"
 
 #### Migrations
 
-Before MappForce becomes operational, one has to run the storage/run_migration.php file. This will initialize the database with default settings which can be edited. Also, it will make a copy of the existing database and store it with a timestamp value as a separate file.
-**Remove of otherwise protect the run_migration.php file when deploying in production.** Running this file again will erase your existing database and replace it with a new instance
+Before MappForce becomes operational, you have to run the */storage/run_migration.php* file. This will initialize the database with default settings which can be edited in UI later. Also, it will make a copy of the existing database and store it with a timestamp value as a separate file as a backup.
+**Remove of otherwise protect the run_migration.php file when deploying in production.** Running this file again will erase your existing database and replace it with a new instance.
 
 
 ### 1\. Requirements
