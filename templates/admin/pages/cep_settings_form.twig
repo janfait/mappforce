@@ -1,90 +1,90 @@
 {# -------------------------------- #}
-				{# ---------Form Start ------------ #}
-				{# -------------------------------- #}
-				<form id="" method="POST" action="{{base_url}}/admin/settings/create">
+{# ---------Form Start ------------ #}
+{# -------------------------------- #}
+<form id="settings_cep" class="setting-form" method="POST" action="{{base_url}}/admin/settings/create">
 
-							{# -------------------------------------------------------------------------------- #}
-							{# -------------------------------Actions Card--------------------------------------#}
-							{# -------------------------------------------------------------------------------- #}
-							<section class="section--center mdl-grid mdl-shadow--2dp white">
-									<div class="mdl-card mdl-cell mdl-cell--12-col">
+	{# -------------------------------------------------------------------------------- #}
+	{# -------------------------------Actions Card--------------------------------------#}
+	{# -------------------------------------------------------------------------------- #}
+	<section class="section--center mdl-grid mdl-shadow--2dp white">
+		<div class="mdl-card mdl-cell mdl-cell--12-col">
 
-										<div class="section__text mdl-cell mdl-cell--6-col-desktop mdl-cell--3-col-tablet mdl-cell--3-col-phone">
-										  <h5>Mapp CEP Settings</h5>
-										  Define the options of connection and data transfer to and from your Mapp CEP
-										</div>
-										<hr>
-										<div class="section__text mdl-cell mdl-cell--6-col-desktop mdl-cell--3-col-tablet mdl-cell--3-col-phone">
-											<!-- Submission -->
-											<button id="setting_sfdc_submit" type="submit" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">
-												Save
-											</button>
-										</div>	
-									</div>
-							
-							{# -------------------------------------------------------------------------------- #}
-							{# -------------------------------CEP Settings -------------------------------------#}
-							{# -------------------------------------------------------------------------------- #}
-								<div class="section__text mdl-cell mdl-cell--12-col-desktop mdl-cell--6-col-tablet mdl-cell--3-col-phone">
+			<div class="section__text mdl-cell mdl-cell--6-col-desktop mdl-cell--3-col-tablet mdl-cell--3-col-phone">
+			  <h5>Mapp CEP Settings</h5>
+			  Define the options of connection and data transfer to and from your Mapp CEP
+			</div>
+			<hr>
+			<div class="section__text mdl-cell mdl-cell--6-col-desktop mdl-cell--3-col-tablet mdl-cell--3-col-phone">
+				<!-- Submission -->
+				<button id="setting_sfdc_submit" type="submit" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--accent">
+					Save
+				</button>
+			</div>	
+		</div>
+	
+	{# -------------------------------------------------------------------------------- #}
+	{# -------------------------------CEP Settings -------------------------------------#}
+	{# -------------------------------------------------------------------------------- #}
+		<div class="section__text mdl-cell mdl-cell--12-col-desktop mdl-cell--6-col-tablet mdl-cell--3-col-phone">
 
-									<ul class="mdl-list">
-									{% for setting in cep_settings %}
-									
-									  <li class="mdl-list__item mdl-list__item--three-line" style="max-width:800px;">
-										<span class="mdl-list__item-primary-content">
-										  <i class="material-icons" style="font-size:30px;width:30px;height:30px;">{{setting.icon}}</i>
-										  <span>{{setting.label}}</span>
-										  <span class="mdl-list__item-text-body" style="max-width:500px;">
-												{{setting.description}}
-										  </span>
-										</span>
-										<span>
-											{% if setting.type == 'password' %}
-												<i class="material-icons toggle-show-password">remove_red_eye</i>
-											{% endif %}
-										</span>
-										
-										{% if setting.type == 'text' or setting.type == 'email' or setting.type == 'password' %}
-											<span class="mdl-list__item-secondary-content">
-												  <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-													<input class="mdl-textfield__input" id="setting_{{setting.name}}" type="{{setting.type}}" name="{{setting.name}}" value="{{setting.value}}" {% if setting.required %}data-required{% endif %}>
-													<label class="mdl-textfield__label" for="setting_{{setting.name}}"></label>
-													<span class="mdl-textfield__error">This is a required field</span>
-												  </div>
-											</span>
-										{% endif %}
+			<ul class="mdl-list">
+			{% for setting in cep_settings %}
+			
+			  <li class="mdl-list__item mdl-list__item--three-line" style="max-width:800px;">
+				<span class="mdl-list__item-primary-content">
+				  <i class="material-icons" style="font-size:30px;width:30px;height:30px;">{{setting.icon}}</i>
+				  <span>{{setting.label}}</span>
+				  <span class="mdl-list__item-text-body" style="max-width:500px;">
+						{{setting.description}}
+				  </span>
+				</span>
+				<span>
+					{% if setting.type == 'password' %}
+						<i class="material-icons toggle-show-password">remove_red_eye</i>
+					{% endif %}
+				</span>
+				
+				{% if setting.type == 'text' or setting.type == 'email' or setting.type == 'password' or setting.type == 'number' %}
+					<span class="mdl-list__item-secondary-content">
+						  <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+							<input class="mdl-textfield__input" id="setting_{{setting.name}}" type="{{setting.type}}" name="{{setting.name}}" value="{{setting.value}}" {% if setting.required %}data-required{% endif %}>
+							<label class="mdl-textfield__label" for="setting_{{setting.name}}"></label>
+							<span class="mdl-textfield__error">Please correct this field.</span>
+						  </div>
+					</span>
+				{% endif %}
 
-										{% if setting.type == 'checkbox' %}
-											<span class="mdl-list__item-secondary-content">
-											<span class="mdl-list__item-secondary-action">
-												  <label class="mdl-switch mdl-js-switch mdl-js-ripple-effect" for="setting_{{setting.name}}">
-												   <input class="mdl-switch__input" id="setting_{{setting.name}}" type="{{setting.type}}" name="{{setting.name}}" {% if setting.value == 1 %}checked{% endif %}>
-												  </label>
-												</span>
-											</span>
-										{% endif %}
+				{% if setting.type == 'checkbox' %}
+					<span class="mdl-list__item-secondary-content">
+					<span class="mdl-list__item-secondary-action">
+						  <label class="mdl-switch mdl-js-switch mdl-js-ripple-effect" for="setting_{{setting.name}}">
+						   <input class="mdl-switch__input" id="setting_{{setting.name}}" type="{{setting.type}}" name="{{setting.name}}" value="true" {% if setting.value == true or setting.value == 1 %}checked data-val="true" {% endif %}>
+						  </label>
+						</span>
+					</span>
+				{% endif %}
 
-										{% if setting.type == 'select' %}
-											<span class="mdl-list__item-secondary-content">
-												<div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label getmdl-select getmdl-select__fix-height">
-													<input class="mdl-textfield__input" type="text" id="sfdc_function{{ cep_standard_attribute.name }}" name="sfdc_function" readonly tabIndex="-1">
-													<ul for="sfdc_function{{ cep_standard_attribute.name }}" class="mdl-menu mdl-menu--bottom-left mdl-js-menu">
-														<li class="mdl-menu__item" data-val="1">1</li>
-														<li class="mdl-menu__item" data-val="2">2</li>
-													</ul>
-												</div>
-											</span>
-										{% endif %}
-									  </li>
-									  <hr>
-									{% endfor %}
-									</ul>
-									<input type="hidden" name="{{csrf.namekey}}" value="{{csrf.name}}">
-									<input type="hidden" name="{{csrf.valuekey}}" value="{{csrf.value}}">
-								</div>
-						</section>
-					</form>
-					
-				{# -------------------------------- #}
-				{# ---------Form End-- ------------ #}
-				{# -------------------------------- #}
+				{% if setting.type == 'select' %}
+					<span class="mdl-list__item-secondary-content">
+						<div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label getmdl-select getmdl-select__fix-height">
+							<input class="mdl-textfield__input" type="text" id="sfdc_function{{ cep_standard_attribute.name }}" name="sfdc_function" readonly tabIndex="-1">
+							<ul for="sfdc_function{{ cep_standard_attribute.name }}" class="mdl-menu mdl-menu--bottom-left mdl-js-menu">
+								<li class="mdl-menu__item" data-val="1">1</li>
+								<li class="mdl-menu__item" data-val="2">2</li>
+							</ul>
+						</div>
+					</span>
+				{% endif %}
+			  </li>
+			  <hr>
+			{% endfor %}
+			</ul>
+			<input type="hidden" name="{{csrf.namekey}}" value="{{csrf.name}}">
+			<input type="hidden" name="{{csrf.valuekey}}" value="{{csrf.value}}">
+		</div>
+	</section>
+</form>
+
+{# -------------------------------- #}
+{# ---------Form End-- ------------ #}
+{# -------------------------------- #}

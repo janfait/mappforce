@@ -73,22 +73,19 @@ class MappApiAuthenticator
 			$mapp_cep -> setAuthentication($user,$password);
 			//attempt a call to the /systemuser endpoint
 			$mapp_cep_user = $mapp_cep->getSystemUser();
-			
 			//challenge again if authentication failed
 			if(true === $mapp_cep_user['error']){
 				return $this->renderError($request,$response);
 			}else{
 				//update or create user
-				if(false){
-					$this->storeUser(
-						array(
-							'instance'=>$instance,
-							'username'=>$user,
-							'password'=>$password,
-							'cep_role'=>'API'
-						)
-					);
-				}
+				$this->storeUser(
+					array(
+						'instance'=>$instance,
+						'username'=>$user,
+						'password'=>password_hash($password, PASSWORD_DEFAULT),
+						'cep_role'=>'API'
+					)
+				);
 				//pass on the request
 				$request = $request->withAttribute('user', $mapp_cep_user['data'])->withAttribute('time',microtime());
 			}
@@ -118,7 +115,7 @@ class SessionAuthenticator {
 			if (isset($_SESSION['LAST_ACTIVITY']) && (time() - $_SESSION['LAST_ACTIVITY'] > getenv('IDLE_TIMEOUT'))) {
 				session_unset();
 				session_destroy();
-				return $response->withStatus(401)->withRedirect($this->container->router->pathFor('showLogin',[],['error'=>true,'error_message'=>'Your session has expired.','from_page'=>$request->getAttribute('route')]));
+				return $response->withStatus(401)->withRedirect($this->container->router->pathFor('showLogin',[],['error'=>true,'message'=>'SESSION_EXPIRED']));
 			}
 			//register last activity
 			$_SESSION['LAST_ACTIVITY'] = time();

@@ -11,13 +11,10 @@ $container = $app->getContainer();
 
 // Csrf
 $container['csrf'] = function ($c) {
-	$guard = new \Slim\Csrf\Guard();
+	$storage = null;
+	$guard = new \Slim\Csrf\Guard('csrf',$storage,null,200,16,true);
     return $guard;
 };
-//register csfr
-//$app->add($container->get('csrf'));
-
-
 
 // Monolog
 $container['logger'] = function ($c) {

@@ -72,6 +72,16 @@ $(".table-toggle").click(function(e) {
     })	
 });
 
+
+///////////////////////CHECKBOX HANDLING ////////////////////////////////////////////////////
+$('input[type="checkbox"]').change(function(){
+	if($(this).prop('checked',false)){
+		$(this).data('val',0);
+	}else{
+		$(this).data('val',1);
+	}
+});
+
 ///////////////////////FORM HANDLER FOR MAPPING//////////////////////////////////////////////
 $(function(){
     $('.tabular-form').on('submit', function(e){
@@ -88,18 +98,19 @@ $(function(){
 		//loop through rows of mapping table and collect values to data array
 		table.find("tr").each(function(){
             var id = $(this).attr('id');
-			var mapped = $(this).find("input[name='sfdc_name']").val();
-			if(mapped!=""){
-				var row = {};
-				$(this).find('input,select,textarea').each(function(i){
-					if($(this).attr('type')=='checkbox'){
-						row[$(this).attr('name')] = $(this).prop('checked');
+			var row = {};
+			$(this).find('input,select,textarea').each(function(i){
+				if($(this).attr('type')=='checkbox'){
+					if($(this).data('val') == 0){
+						row[$(this).attr('name')] = false;
 					}else{
-						row[$(this).attr('name')] = $(this).val();
+						row[$(this).attr('name')] = true;
 					}
-				});
-				data[id]=row;
-			}
+				}else{
+					row[$(this).attr('name')] = $(this).val();
+				}
+			});
+			data[id]=row;
 
         });
 		

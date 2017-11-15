@@ -35,14 +35,16 @@
 		<!-- Content area under page header -->
 		<div class="mdl-layout__content">
 			{% if error %}
-				<div class="mdl-components__warning">
+			<br>
+				<div class="mdl-components__warning mdl-shadow--2dp">
 					<b>Error:</b>
 					{{message}}
 				</div>
 			{% endif %}
 			
 			{% if success %}
-				<div class="mdl-components__success">
+			<br>
+				<div class="mdl-components__success mdl-shadow--2dp">
 					{{message}}
 				</div>
 			{% endif %}

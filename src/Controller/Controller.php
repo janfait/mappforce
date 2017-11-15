@@ -56,7 +56,9 @@ abstract class Controller
 			'NO_OAUTH_CLIENT' => 'The Salesforce Oauth Client has failed to load.',
 			'FAILED_OAUTH_REQUEST' => 'The request to the OAuth endpoint of Salesforce has failed.',
 			'AUTHORIZATION_SUCCESS' => 'MappForce app is now succesfully authorized against Salesforce',
-			'NO_CONNECTION_SFDC' => 'Failed to connect to Salesforce. Please set or review your connection in Settings section.'
+			'NO_CONNECTION_SFDC' => 'Failed to connect to Salesforce. Please set or review your connection in Settings section.',
+			'SESSION_EXPIRED' => 'Your session has expired, please login again.',
+			'STORAGE_SUCCESS' => 'Your settings have been stored successfuly.'
 		);
 		$this->oauth = $this->settings['sfdc']['oauth'];
 		$this->call_stack = array();
@@ -173,7 +175,7 @@ abstract class Controller
 		
 	}
 	
-	private function _sfdc_store_oauth_token($token)
+	public function _sfdc_store_oauth_token($token)
 	{
 		
 		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
@@ -313,19 +315,20 @@ abstract class Controller
 		return $response;
 	}
 	
-	private function _sfdc_collect_api_server(){
+	public function _sfdc_collect_api_server(){
 		
 		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
 
-		$sfdc_api_server = Setting::where('name','sfdc')->first();
+		$sfdc_api_server = Setting::where('name','sfdc_api_server')->first();
 		
-		if(!empty($sfdc_api_server)){
+		if(!empty($sfdc_api_server->value)){
 			$sfdc_api_server = $this->_decrypt($sfdc_api_server->value,$this->settings['secret']);
 		}else{
 			$sfdc_identity = $this->_sfdc_collect_identity($this->sfdc_settings['sfdc_server_url']);
-			if(!isset($sfdc_identity['error'])){
+			if(isset($sfdc_identity['urls'])){
 				$sfdc_api_server = $sfdc_identity['urls']['partner'];
 				$sfdc_api_server = str_replace("{version}","latest",$sfdc_api_server);
+				$sfdc_api_server = $this->_sfdc_store_api_server($sfdc_api_server);
 			}else{
 				$sfdc_api_server = false;
 			}
@@ -336,8 +339,22 @@ abstract class Controller
 
 	}
 	
+	public function _sfdc_store_api_server($value){
+		
+		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
 
-	
+		$setting = Setting::where('name','sfdc_api_server')->first();
+		if($setting->type == 'password'){
+			$setting->value = $this->_encrypt($value,$this->settings['secret']);	
+		}else{
+			$setting->value = $value;
+		}
+		//store to database
+		$setting->save();
+		
+		return $value;
+	}
+
 	public function sfdc_login()
 	{
 		
@@ -393,6 +410,9 @@ abstract class Controller
 	
 	public function _encrypt($data, $key)
 	{
+		if(empty($data)){
+			return null;
+		}
 		$encryption_key = base64_decode($key);
 		$iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length('aes-256-cbc'));
 		$encrypted = openssl_encrypt($data, 'aes-256-cbc', $encryption_key, 0, $iv);
@@ -401,6 +421,9 @@ abstract class Controller
 	 
 	public function _decrypt($data, $key)
 	{
+		if(empty($data)){
+			return null;
+		}
 		$encryption_key = base64_decode($key);
 		list($encrypted_data, $iv) = explode('::', base64_decode($data), 2);
 		return openssl_decrypt($encrypted_data, 'aes-256-cbc', $encryption_key, 0, $iv);

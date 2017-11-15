@@ -74,7 +74,19 @@ class AdminController extends Controller
 /////////////////////////////////////////////////////////////////////////////////////	
 	public function showLogin(Request $request, Response $response, $args)
     {
-		return $this->renderAdminUI($request,$response,'admin/pages/login.twig',null,200);
+		
+		
+		$body = $this->default_ui_status;
+		$error = $request->getParam('error');
+		
+		if(!empty($error)){
+			
+			$body['error'] = true;
+			$message_code = $request->getParam('message');
+			$body['message'] = $this->messages[$message_code];
+		}
+		
+		return $this->renderAdminUI($request,$response,'admin/pages/login.twig',$body,200);
 
     }
 /////////////////////////////////////////////////////////////////////////////////////

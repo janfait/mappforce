@@ -70,7 +70,7 @@ class SettingController extends Controller
 		}
 		//pass it to the oauth token collector
 		$oauth_token = $this->_sfdc_collect_oauth_token($authorization_code);
-		if($outh_token['error']){
+		if(isset($oauth_token['error'])){
 			return $response->withRedirect($this->container->router->pathFor('getSetting',[],['error'=>true,'message'=>'FAILED_OAUTH_REQUEST']));
 		}
 		//store the token elements
@@ -124,6 +124,10 @@ class SettingController extends Controller
 			$status['message'] = $this->messages[$query['message']];
 			$status['success'] = !$status['error'];
 		}
+		if(isset($query['success'])){
+			$status['message'] = $this->messages[$query['message']];
+			$status['success'] = true;
+		}
 		
 		//render
 		$body = $this->view->fetch('admin/pages/settings.twig', [
@@ -147,9 +151,6 @@ class SettingController extends Controller
 		
 		$data = $request->getParsedBody();
 
-		
-		return $response->withJson($data);
-		
 		foreach($data as $item_key => $value){
 			
 			$setting = Setting::where('name',$item_key)->first();
@@ -163,7 +164,7 @@ class SettingController extends Controller
 			}
 		}
 		
-		return $response->withRedirect($this->container->router->pathFor('getSetting'));
+		return $response->withRedirect($this->container->router->pathFor('getSetting',[],['success'=>true,'message'=>'STORAGE_SUCCESS']));
 
 	}
 

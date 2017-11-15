@@ -72,6 +72,8 @@ $app->group('/api', function() {
 	$this->group('/sfdc', function() {
 		//identity
 		$this->get('/id', 'MappIntegrator\Controller\ApiController:sfdcIdentity');
+		//api server
+		$this->get('/server', 'MappIntegrator\Controller\ApiController:sfdcApiEndpoint');
 		//describe the current user
 		$this->get('/user', 'MappIntegrator\Controller\ApiController:sfdcUser');
 		//run a query

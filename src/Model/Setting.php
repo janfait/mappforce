@@ -70,8 +70,8 @@ class SettingsDictionary {
 			'name'=>'cep_template_group_id',
 			'required'=>false,
 			'value'=>0,
-			'label'=>'Default Group Configuration Templates',
-			'icon'=>'verified_user',
+			'label'=>'Default Group Configuration Template ID',
+			'icon'=>'looks one',
 			'description'=>'ID of a configuration template which should be applied to newly cloned groups',
 			'type'=>'number',
 			'editable'=>true,
@@ -84,7 +84,7 @@ class SettingsDictionary {
 			'required'=>false,
 			'value'=>0,
 			'label'=>'Default Group ID',
-			'icon'=>'verified_user',
+			'icon'=>'looks one',
 			'description'=>'ID of the default group which will be using for cloning and synchronization',
 			'type'=>'number',
 			'editable'=>true,
@@ -100,7 +100,7 @@ class SettingsDictionary {
 			'icon'=>'domain',
 			'description'=>'Domain of your Mapp CEP system (example: cook, amundsen, armstrong, ...)',
 			'type'=>'select',
-			'editable'=>false,
+			'editable'=>true,
 			'picklist'=>'cook,amundsen,aldrin,armstrong'
 		),
 		'cep_secret'=>array(
@@ -139,7 +139,7 @@ class SettingsDictionary {
 			'icon'=>'verified_user',
 			'description'=>'Your Salesforce username (example: first.name@company.com)',
 			'type'=>'email',
-			'editable'=>true,
+			'editable'=>false,
 			'picklist'=>null
 		),
 		'sfdc_password'=>array(
@@ -152,7 +152,7 @@ class SettingsDictionary {
 			'icon'=>'verified_user',
 			'description'=>'Your Salesforce password',
 			'type'=>'password',
-			'editable'=>true,
+			'editable'=>false,
 			'picklist'=>null
 		),
 		'sfdc_security_token'=>array(
@@ -165,7 +165,7 @@ class SettingsDictionary {
 			'icon'=>'verified_user',
 			'description'=>'Security token is obtained in your Salesforce user profile.',
 			'type'=>'password',
-			'editable'=>true,
+			'editable'=>false,
 			'picklist'=>null
 		),
 		'sfdc_redirect_uri'=>array(
@@ -250,6 +250,19 @@ class SettingsDictionary {
 			'realm'=>'sfdc',
 			'category'=>'authentication',
 			'name'=>'sfdc_server_url',
+			'required'=>false,
+			'value'=>'',
+			'label'=>'Server URL',
+			'icon'=>'verified_user',
+			'description'=>'Identity URL for Salesforce login',
+			'type'=>'password',
+			'editable'=>false,
+			'picklist'=>null
+		),
+		'sfdc_api_server'=>array(
+			'realm'=>'sfdc',
+			'category'=>'authentication',
+			'name'=>'sfdc_api_server',
 			'required'=>false,
 			'value'=>'',
 			'label'=>'Server URL',

@@ -39,7 +39,7 @@
 		
 		<form id="csrf" method="GET" action="">
 			<input type="hidden" name="{{csrf.namekey}}" value="{{csrf.name}}">
-			<input type="hidden" name="{{csrf.valuekey}}" value="{{csfr.value}}">
+			<input type="hidden" name="{{csrf.valuekey}}" value="{{csrf.value}}">
 		</form>
 		
 		{# -------------------------------- #}
@@ -48,15 +48,16 @@
 		
 		<!-- Content area under page header -->
 		<div class="mdl-layout__content">
+		<br>
 				{% if error %}
-					<div class="mdl-components__warning">
+					<div class="mdl-components__warning mdl-shadow--2dp">
 						<b>Error:</b>
 						{{message}}
 					</div>
 				{% endif %}
 				
 				{% if success %}
-					<div class="mdl-components__success">
+					<div class="mdl-components__success mdl-shadow--2dp">
 						{{message}}
 					</div>
 				{% endif %}

@@ -20,7 +20,8 @@ class ApiController extends Controller
 		if($request->getParam('debug')){
 			$data['debug'] = array(
 				'cep_user'=>$request->getAttribute('user'),
-				'call_stack' => $this->call_stack
+				'call_stack' => $this->call_stack,
+				'response_stack' => $this->response_stack
 			);
 		}
 		
@@ -53,7 +54,8 @@ class ApiController extends Controller
 		if($request->getParam('debug')){
 			$data['debug'] = array(
 				'cep_user'=>$request->getAttribute('user'),
-				'call_stack' => $this->call_stack
+				'call_stack' => $this->call_stack,
+				'response_stack' => $this->response_stack
 			);
 		}
 		
@@ -167,6 +169,13 @@ class ApiController extends Controller
         return $this->renderOutput($request,$response,$output);
     }
 	
+	public function sfdcApiEndpoint(Request $request, Response $response, $args)
+	{
+		$output = $this->default_output;
+		$output['payload'] = $this->_sfdc_collect_api_server();
+        return $this->renderOutput($request,$response,$output);
+    }
+	
 	public function sfdcUser(Request $request, Response $response, $args)
 	{
 		$output = $this->default_output;
@@ -229,7 +238,7 @@ class ApiController extends Controller
 	{
 		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
 		//get mapping from database for the particular object, key by cep_api_name
-		$mapping = Mapping::where('sfdc_object',$object)->get()->keyBy('cep_api_name')->toArray();
+		$mapping = Mapping::where([['sfdc_object',$object],['sfdc_name','<>','']])->get()->keyBy('cep_api_name')->toArray();
 		//create fields array
 		$fields = [];
 		//collect the fields from request body and map them according to existing mapping
