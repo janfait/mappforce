@@ -10,22 +10,7 @@ The application allows the user to configure which data is transfered between th
 
 ##### Example
 
-For illlustration, consider an event occuring in your Mapp CEP system, such as an Email Message is opened by a Contact, a Contact entering a Group or its Profile attribute changing. Using Automations feature of Mapp CEP, you are able to fire an outgoing HTTP request to selected Mapp Force endpoints with information about this event and the Contact by including a message body in a defined format. Have you configured your attribute [Mapping]({{base_url}}/admin/mapping) and authorized MappForce to access your Salesforce in the [Settings]({{base_url}}/admin/settings) section, Mapp Force connects to your Salesforce instance and performs a data operation defined by the endpoint, commonly an insert or update of the corresponding record.
-
-##### Contents
-
-*   <span>[1\. Requirements](#requirements)</span>
-*   [2\. Configuration](#configuration)
-*   [3\. Operation](#operation)
-*   <span>[4\. Security](#security)</span>
-
-</div>
-
-</div>
-
-<div class="mdl-card mdl-shadow--2dp ui-page-card">
-
-<div class="mdl-card__supporting-text">
+For illlustration, consider an event occuring in your Mapp CEP system, such as an Email Message is opened by a Contact, a Contact entering a Group or its Profile attribute changing. Using Automations feature of Mapp CEP, you are able to fire an outgoing HTTP request to selected Mapp Force endpoints with information about this event and the Contact by including a message body in a defined format. Have you configured your attribute Mapping and authorized MappForce to access your Salesforce in the Settings section, Mapp Force connects to your Salesforce instance and performs a data operation defined by the endpoint, commonly an insert or update of the corresponding record.
 
 ### 1\. Requirements
 
