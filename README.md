@@ -2,15 +2,43 @@
 
 * * *
 
-##### About
+#### About
 
 Mapp Force is an open-source application developed by Mapp Digital which facilitates transfer of data between the Mapp Customer Engagment Platform (CEP) and Salesforce CRM.
 
 The application allows the user to configure which data is transfered between the two systems and how are Mapp CEP attributes mapped to corresponding Salesforce fields.
 
-##### Example
+#### Example
 
 For illlustration, consider an event occuring in your Mapp CEP system, such as an Email Message is opened by a Contact, a Contact entering a Group or its Profile attribute changing. Using Automations feature of Mapp CEP, you are able to fire an outgoing HTTP request to selected Mapp Force endpoints with information about this event and the Contact by including a message body in a defined format. Have you configured your attribute Mapping and authorized MappForce to access your Salesforce in the Settings section, Mapp Force connects to your Salesforce instance and performs a data operation defined by the endpoint, commonly an insert or update of the corresponding record.
+
+### Installation
+
+#### Server Requirements
+
+PHP 5.6+
+SOAP Extension
+SQLite Extension
+
+#### .env file
+
+An .env file in the root folder of MappForce should host two important variables. An encryption key and a idle_timeout variable which indicates the session length for the UI user.
+An example .env file looks like this:
+
+<pre>
+# encryption key for sensitive session variables
+SECRET="value"
+# maximum length of period without activity before logout
+IDLE_TIMEOUT=1800
+#contact person
+CONTACT="jan.fait@mapp.com" 
+</pre>
+
+#### Migrations
+
+Before MappForce becomes operational, one has to run the storage/run_migration.php file. This will initialize the database with default settings which can be edited. Also, it will make a copy of the existing database and store it with a timestamp value as a separate file.
+**Remove of otherwise protect the run_migration.php file when deploying in production.** Running this file again will erase your existing database and replace it with a new instance
+
 
 ### 1\. Requirements
 
