@@ -15,7 +15,7 @@ return [
         ],
         //log name and location
         'logger' => [
-            'name' => 'mapp-integrator',
+            'name' => 'mappforce',
             'path' => __DIR__ . '/../storage/logs/app.log',
         ],
 		//eloquent configuration

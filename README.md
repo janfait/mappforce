@@ -14,15 +14,19 @@ For illlustration, consider an event occuring in your Mapp CEP system, such as a
 
 ### Installation
 
-Clone the content of the project to your server and complete the following steps
+Clone the MappForce GitHub repository to your server and complete the following steps
 
-#### PHP Requirements
+#### Complete PHP Requirements
 
 - PHP 5.6+
-- php_sqlite3
-- php_pdo_sqlite
-- php_curl
-- php_soap
+- php_sqlite3 enabled
+- php_pdo_sqlite enabled
+- php_curl enabled
+- php_soap enabled
+
+#### Composer
+
+MappForce uses a number of composer packages. Be sure to have composer installed.
 
 #### .env file
 

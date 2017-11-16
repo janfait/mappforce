@@ -26,7 +26,6 @@ $app->group('/admin', function() {
 
 	$this->get('/settings', 'MappIntegrator\Controller\SettingController:get')->setName('getSetting');
 	$this->post('/settings/create', 'MappIntegrator\Controller\SettingController:create')->setName('createSetting');
-	$this->post('/settings/delete', 'MappIntegrator\Controller\SettingController:delete')->setName('deleteSetting');
 	$this->get('/settings/connection', 'MappIntegrator\Controller\SettingController:testConnection')->setName('testConnection');
 	$this->get('/settings/oauth', 'MappIntegrator\Controller\SettingController:oauth')->setName('oauth');
 	$this->get('/settings/authorize', 'MappIntegrator\Controller\SettingController:authorizeApp')->setName('authorize');
@@ -38,7 +37,6 @@ $app->group('/admin', function() {
 	$this->get('/mapping', 'MappIntegrator\Controller\AdminController:getMapping')->setName('getMapping');
 	$this->get('/mapping/map', 'MappIntegrator\Controller\AdminController:createJsonMap')->setName('createJsonMap');
 	$this->post('/mapping/create', 'MappIntegrator\Controller\AdminController:createMapping')->setName('createMapping');
-	$this->post('/mapping/delete', 'MappIntegrator\Controller\AdminController:deleteMapping')->setName('deleteMapping');
 
 
 })->add( new SessionAuthenticator($container))->add($container->get('csrf'));
@@ -84,7 +82,7 @@ $app->group('/api', function() {
 		$this->get('/{object}/fields', 'MappIntegrator\Controller\ApiController:sfdcObjectFields');
 		//map
 		$this->post('/{object}/map', 'MappIntegrator\Controller\ApiController:sfdcMap');
-		//upsert the defined object
+		//upsert generic
 		$this->post('/upsert', 'MappIntegrator\Controller\ApiController:sfdcUpsert');
 		//generic upsert by method
 		$this->post('/{object}/upsertby', 'MappIntegrator\Controller\ApiController:sfdcUpsertBy');
