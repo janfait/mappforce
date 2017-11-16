@@ -30,6 +30,9 @@ return [
 			'wsdl'=>__DIR__ . '/../vendor/developerforce/force.com-toolkit-for-php/soapclient/partner.wsdl.xml',
 			'oauth'=>true
 		],
+		'cep' => [
+			'instance' => 'ecircle_marketing'
+		],
 		//encryption
 		'secret'=> getenv('SECRET'),
 		//contact address

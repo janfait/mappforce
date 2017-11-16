@@ -47,6 +47,10 @@ CONTACT="jan.fait@mapp.com"
 Before MappForce becomes operational, you have to run the */storage/run_migration.php* file. This will initialize the database with default settings which can be edited in UI later. Also, it will make a copy of the existing database and store it with a timestamp value as a separate file as a backup.
 **Remove of otherwise protect the run_migration.php file when deploying in production.** Running this file again will erase your existing database and replace it with a new instance.
 
+#### Folder access
+
+Make sure the sqlite database in the project /storage folder is writeable
+
 
 ### 1\. Requirements
 
@@ -130,11 +134,11 @@ After a succesful authorization, MappForce will show a new 'Test Connection' but
 
 Your Redirect URL (also called Callback URL) has to be hosted on a secure domain (https://...). Typically, when this would look something like:
 
-<pre>https://YOUR-SERVER-NAME.com/mappforce/settings/oauth</pre>
+<pre>https://YOUR-SERVER-NAME.com/mappforce/admin/settings/oauth</pre>
 
 or if MappForce is hosted on platforms such as Heroku, it will be this:
 
-<pre>https://YOUR-APP-NAME.herokuapp.com/settings/oauth</pre>
+<pre>https://YOUR-APP-NAME.herokuapp.com/admin/settings/oauth</pre>
 
 This is the URL you will be redirected to after a succesful authorization of the MappForce App by Salesforce.
 

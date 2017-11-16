@@ -47,11 +47,14 @@ class MappApiAuthenticator
 		if (isset($server_params["PHP_AUTH_USER"])) {
 			$user_data = $server_params["PHP_AUTH_USER"];
 			$user_data = explode('|', $user_data);
-			if(count($user_data)<2){
+			$instance = $this->container->settings['cep']['instance'];
+			if(count($user_data)<2 && empty($instance)){
 				return $this->renderError($request,$response,"Authentication failed: Your username has to be in the following format system_name|username:password",401);
+			}else{
+				$instance = $user_data[0];
+				$user = $user_data[1];
 			}
-			$instance = $user_data[0];
-			$user = $user_data[1];
+
 		}
 		//collect password
 		if (isset($server_params["PHP_AUTH_PW"])) {

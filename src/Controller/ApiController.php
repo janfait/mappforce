@@ -321,6 +321,52 @@ class ApiController extends Controller
 		return $results;
 	}
 	
+	public function sfdcTransferQuery(Request $request, Response $response,$args)
+	{
+		//get body of request and request params
+		$body = $request->getQueryParams();
+		//get default output
+		$output = $this->default_output;
+
+		if(isset($query['q'])){
+			$search_query = $query['q'];
+			$output = $this->_sfdcQuery($search_query);
+		}else{
+			$this->renderError($request,$response,'MISSING_REQUIRED_PARAMETER');
+		}
+		
+		return $this->renderOutput($request,$response,$output);
+	}
+	
+		private function _sfdcQuery($query)
+	{
+		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
+		$results = $this->default_output;
+		$results['query'] = $query;
+		$results['query_result_size'] = 0;
+		$results['payload'] = array();
+		
+		try {
+		  $req = $this->sfdc_client->query($query);
+		  $res = new \QueryResult($req);
+		  $results['query_result_size'] = $res->size;
+
+		  for($res->rewind();$res->pointer < $res->size; $res->next()){
+			$set = $res->current();
+			$fields = (array)$set->fields;
+			$fields['Id'] = $set->Id;
+			array_push($results['payload'],$fields);
+		  }
+
+		} catch (\Exception $e) {
+
+		  $results['error'] =  true;
+		  $results['error_message'] =  $e->faultstring;
+		}
+		
+		return $results;
+	}
+	
 	public function sfdcAddToCampaign(Request $request, Response $response, $args)
 	{		
 		//get body of request and request params

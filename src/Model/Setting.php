@@ -126,7 +126,7 @@ class SettingsDictionary {
 			'icon'=>'security',
 			'description'=>'If selected, OAuth flow is used for authentication. Otherwise, user-password flow is used (not recommended) ',
 			'type'=>'checkbox',
-			'editable'=>true,
+			'editable'=>false,
 			'picklist'=>null
 		),
 		'sfdc_username'=>array(
