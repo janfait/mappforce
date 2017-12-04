@@ -28,7 +28,8 @@ return [
 		//sfdc settings
 		'sfdc' => [
 			'wsdl'=>__DIR__ . '/../vendor/developerforce/force.com-toolkit-for-php/soapclient/partner.wsdl.xml',
-			'oauth'=>true
+			'oauth'=>true,
+			'query_limit'=>500
 		],
 		'cep' => [
 			'instance' => 'ecircle_marketing'

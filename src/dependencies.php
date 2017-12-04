@@ -54,6 +54,11 @@ $container['SforceClient'] = function ($c) {
     return new SforcePartnerClient();
 };
 
+// Salesforce Client
+$container['CountryMap'] = function ($c) {
+    return json_decode('/Resources/countrymap.json',true);
+};
+
 // Twig
 $container['view'] = function ($c) {
 	//tell slim where the templates are
@@ -61,7 +66,7 @@ $container['view'] = function ($c) {
         'cache' => false,
 		'auto_reload' => true
     ]);
-	//adapt the base url
+	//adapt the base url, will be mappforce/public
     $basePath = rtrim(str_ireplace('index.php', '', $c['request']->getUri()->getBasePath()), '/');
     $view->addExtension(new Slim\Views\TwigExtension($c['router'], $basePath));
 	//pass it to the view as a variable

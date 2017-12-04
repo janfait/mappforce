@@ -74,8 +74,6 @@ class AdminController extends Controller
 /////////////////////////////////////////////////////////////////////////////////////	
 	public function showLogin(Request $request, Response $response, $args)
     {
-		
-		
 		$body = $this->default_ui_status;
 		$error = $request->getParam('error');
 		
@@ -92,7 +90,6 @@ class AdminController extends Controller
 /////////////////////////////////////////////////////////////////////////////////////
 	public function login(Request $request, Response $response, $args)
 	{
-
 		$data = $request->getParsedBody();
 		$this->mapp_client->setInstance($data['sysname']);
 		$this->mapp_client->setAuthentication($data['username'],$data['password']);
@@ -108,6 +105,7 @@ class AdminController extends Controller
 
 		}else{
 			
+			session_regenerate_id();
 			$_SESSION['LOGGEDIN'] = true;
 			$_SESSION['INST'] = $this->_encrypt($data['sysname'],$this->settings['secret']);
 			$_SESSION['USER'] = $this->mapp_user['data'];
@@ -169,7 +167,6 @@ class AdminController extends Controller
 /////////////////////////////////////////////////////////////////////////////////////	
 	public function getMapping(Request $request, Response $response, $args)
 	{
-
 		//populate mapp client from session todo: remove from controller methods to middleware/make common for all methods
 		$this->mapp_client->setInstance(
 			$this->_decrypt($_SESSION['INST'],$this->settings['secret'])

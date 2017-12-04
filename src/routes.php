@@ -76,8 +76,10 @@ $app->group('/api', function() {
 		$this->get('/user', 'MappIntegrator\Controller\ApiController:sfdcUser');
 		//run a query
 		$this->get('/query', 'MappIntegrator\Controller\ApiController:sfdcQuery');
-		//run a query
+		//run a search
 		$this->get('/search', 'MappIntegrator\Controller\ApiController:sfdcSearch');
+		//transfer an object using a query
+		$this->post('/{object}/transfer', 'MappIntegrator\Controller\ApiController:sfdcTransferQuery');
 		//describe the defined object fields
 		$this->get('/{object}/fields', 'MappIntegrator\Controller\ApiController:sfdcObjectFields');
 		//map

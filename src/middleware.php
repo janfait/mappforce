@@ -45,16 +45,7 @@ class MappApiAuthenticator
 
 		//collect instance and username
 		if (isset($server_params["PHP_AUTH_USER"])) {
-			$user_data = $server_params["PHP_AUTH_USER"];
-			$user_data = explode('|', $user_data);
-			$instance = $this->container->settings['cep']['instance'];
-			if(count($user_data)<2 && empty($instance)){
-				return $this->renderError($request,$response,"Authentication failed: Your username has to be in the following format system_name|username:password",401);
-			}else{
-				$instance = $user_data[0];
-				$user = $user_data[1];
-			}
-
+			$user = $server_params["PHP_AUTH_USER"];
 		}
 		//collect password
 		if (isset($server_params["PHP_AUTH_PW"])) {
@@ -64,14 +55,15 @@ class MappApiAuthenticator
 		if(false === $user | false === $password){
 			return $this->renderError($request,$response);
 		}
-		//validate json body
-		if($post & !$this->validateJson($body)){
-			return $this->renderError($request,$response,"Invalid JSON body",400);
-		}
 		//collect user
 		if($this->container->has('mappCep')) {
 			//initialize a blank Mapp CEP instance
 			$mapp_cep = $this->container->mappCep;
+			//collect instance
+			$instance = $instance = $this->container->settings['cep']['instance'];
+			if(empty($instance)){
+				return $this->renderError($request,$response,"Missing Mapp CEP instance setting",500);
+			}
 			$mapp_cep -> setInstance($instance);
 			$mapp_cep -> setAuthentication($user,$password);
 			//attempt a call to the /systemuser endpoint
@@ -80,15 +72,12 @@ class MappApiAuthenticator
 			if(true === $mapp_cep_user['error']){
 				return $this->renderError($request,$response);
 			}else{
-				//update or create user
-				$this->storeUser(
-					array(
-						'instance'=>$instance,
-						'username'=>$user,
-						'password'=>password_hash($password, PASSWORD_DEFAULT),
-						'cep_role'=>'API'
-					)
-				);
+				//regenerate id
+				session_regenerate_id();
+				//validate json body
+				if($post & !$this->validateJson($body)){
+					return $this->renderError($request,$response,"Invalid JSON body",400);
+				}
 				//pass on the request
 				$request = $request->withAttribute('user', $mapp_cep_user['data'])->withAttribute('time',microtime());
 			}

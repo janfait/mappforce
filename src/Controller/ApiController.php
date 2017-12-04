@@ -17,7 +17,8 @@ class ApiController extends Controller
 	
 	private function renderOutput(Request $request, Response $response, $data, $status = 200){
 		
-		if($request->getParam('debug')){
+		//allow debug only for applications in development
+		if($request->getParam('debug') && $this->settings['debug']){
 			$data['debug'] = array(
 				'cep_user'=>$request->getAttribute('user'),
 				'call_stack' => $this->call_stack,
@@ -80,6 +81,22 @@ class ApiController extends Controller
 			}
 		}
 		return true;
+	}
+	
+	private function _countryMap($string,$iso = 'alpha-2'){
+		
+		$country_map = $this->container->CountryMap;
+		
+		if($iso=='alpha-2'){
+			$country_map = array_flip($country_map);
+		}
+
+		if(array_key_exists($string,$country_map)){
+			return $country_map[$string];
+		}else{
+			return "";
+		}
+		
 	}
 	
 	////////////////////////////////////////////////
@@ -156,6 +173,7 @@ class ApiController extends Controller
 
         return $this->renderOutput($request,$response,$output);
     }
+	
 	////////////////////////////////////////////////
 	// SFDC specific endpoints
 	////////////////////////////////////////////////
@@ -234,6 +252,30 @@ class ApiController extends Controller
         return $this->renderOutput($request,$response,$output);
 	}
 	
+	private function _cepMap($object,$body)
+	{
+		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
+		//get mapping from database for the particular object, key by cep_api_name
+		$mapping = Mapping::where([['sfdc_object',$object],['sfdc_name','<>','']])->get()->keyBy('sfdc_name')->toArray();
+		//create fields array
+		$fields = [];
+		//collect the fields from request body and map them according to existing mapping
+		foreach($body as $item=>$value){
+			if(array_key_exists($item,$mapping)){
+				//collect the corresponding sfdc field key
+				$field_key = $mapping[$item]['cep_api_name'];
+				//add value
+				$fields[$field_key]=$value;
+			}
+		}
+
+		if(isset($fields['user.ISOCountryCode'])){
+			$this->_countryMap($fields['user.ISOCountryCode'],'alpha-2');
+		}
+		
+		return $fields;
+	}
+	
 	private function _sfdcMap($object,$body)
 	{
 		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
@@ -292,15 +334,19 @@ class ApiController extends Controller
 		return $this->renderOutput($request,$response,$output);
 	}
 	
-		private function _sfdcQuery($query)
+	private function _sfdcQuery($query)
 	{
 		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
 		$results = $this->default_output;
-		$results['query'] = $query;
+		
 		$results['query_result_size'] = 0;
 		$results['payload'] = array();
 		
 		try {
+		  if(strpos($query,'LIMIT') == false){
+			 $query = $query." LIMIT ".$this->container->settings['sfdc']['query_limit']; 
+		  }
+		  $results['query'] = $query;
 		  $req = $this->sfdc_client->query($query);
 		  $res = new \QueryResult($req);
 		  $results['query_result_size'] = $res->size;
@@ -324,47 +370,48 @@ class ApiController extends Controller
 	public function sfdcTransferQuery(Request $request, Response $response,$args)
 	{
 		//get body of request and request params
-		$body = $request->getQueryParams();
+		$body = $request->getParsedBody();
 		//get default output
 		$output = $this->default_output;
-
-		if(isset($query['q'])){
-			$search_query = $query['q'];
-			$output = $this->_sfdcQuery($search_query);
+		//get object
+		$object = $request->getAttribute('object');
+		//validate object
+		if(!$this->_validateObject($object)){
+			$this->renderError($request,$response,'OBJECT_NOT_ALLOWED');
+		}
+		if(isset($body['q'])){
+			$search_query = $body['q'];
+			$results = $this->_sfdcQuery($search_query);
+			//initialize empty array for results
+			$transfer_results = [];
+			//loop through query results and transfer them
+			foreach($results['payload'] as $record){
+				$transfer_result = $this->_sfdcTransferRecord($record,$object);
+				$transfer_results[] = $transfer_result;
+			}
+			//pass result to payload
+			$output['payload'] = $transfer_results;
+			
 		}else{
 			$this->renderError($request,$response,'MISSING_REQUIRED_PARAMETER');
 		}
+
 		
 		return $this->renderOutput($request,$response,$output);
 	}
 	
-		private function _sfdcQuery($query)
-	{
-		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
-		$results = $this->default_output;
-		$results['query'] = $query;
-		$results['query_result_size'] = 0;
-		$results['payload'] = array();
+	private function _sfdcTransferRecord($record,$object){
 		
-		try {
-		  $req = $this->sfdc_client->query($query);
-		  $res = new \QueryResult($req);
-		  $results['query_result_size'] = $res->size;
-
-		  for($res->rewind();$res->pointer < $res->size; $res->next()){
-			$set = $res->current();
-			$fields = (array)$set->fields;
-			$fields['Id'] = $set->Id;
-			array_push($results['payload'],$fields);
-		  }
-
-		} catch (\Exception $e) {
-
-		  $results['error'] =  true;
-		  $results['error_message'] =  $e->faultstring;
-		}
+		//map the record to CEP
+		$mapped_body = $this->_cepMap($object,$record);
+		//use mapp client to upsert the record
+		$this->mapp_contact->setExecutor($this->mapp_client);
+		$cep_response = $this->mapp_contact->upsertByEmail(array('email'=>$mapped_body['user.Email']),$mapped_body);
+		//assign result
+		$transfer_result = array('email'=>$mapped_body['user.Email'],'cep_response'=>$cep_response);
+		//return $transfer_result;
+		return $transfer_result;
 		
-		return $results;
 	}
 	
 	public function sfdcAddToCampaign(Request $request, Response $response, $args)

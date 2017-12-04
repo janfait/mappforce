@@ -16,7 +16,9 @@ For illlustration, consider an event occuring in your Mapp CEP system, such as a
 
 Clone the MappForce GitHub repository to your server and complete the following steps
 
-#### Complete PHP Requirements
+<pre>git clone https://github.com/janfait/mappforce</pre>
+
+#### PHP Requirements
 
 - PHP 5.6+
 - php_sqlite3 enabled
@@ -26,7 +28,9 @@ Clone the MappForce GitHub repository to your server and complete the following 
 
 #### Composer
 
-MappForce uses a number of composer packages. Be sure to have composer installed.
+MappForce uses a number of composer packages. Be sure to have composer installed, then while in the MappForce folder, run:
+
+<pre>composer update</pre>
 
 #### .env file
 
@@ -35,11 +39,54 @@ An example .env file looks like this:
 
 <pre>
 # encryption key for sensitive session variables
-SECRET="value"
+SECRET="myverysecretencryptionkey"
 # maximum length of period without activity before logout
 IDLE_TIMEOUT=1800
 #contact person
 CONTACT="jan.fait@mapp.com" 
+</pre>
+
+#### /srv/settings.php file
+
+Below is an example settings.php file for production use with a sqlite database. Mind the cep['system'] setting. This is where your Mapp CEP system name needs to be populated. If this is missing, you won't be able to make API requests. The server will respond with "Missing Mapp CEP instance setting".
+
+<pre>
+    'settings' => [
+        //production
+        'displayErrorDetails' => false,
+		'debug' => false,
+        //template location
+        'renderer' => [
+            'template_path' => __DIR__ . '/../templates/',
+        ],
+        //log name and location
+        'logger' => [
+            'name' => 'mappforce',
+            'path' => __DIR__ . '/../storage/logs/app.log',
+        ],
+		//eloquent database driver configuration
+		'db' => [
+            'driver'    => 'sqlite',
+            'database' => __DIR__ . '/../storage/database.sqlite',
+            'charset'   => 'utf8',
+            'prefix'    => '',
+        ],
+		//sfdc settings
+		'sfdc' => [
+			'wsdl'=>__DIR__ . '/../vendor/developerforce/force.com-toolkit-for-php/soapclient/partner.wsdl.xml',
+			'oauth'=>true,
+			//how many records can the user query at maximum
+			'query_limit'=>500
+		],
+		'cep' => [
+			//what is the Mapp CEP system we authenticate against
+			'instance' => 'mapp_marketing'
+		],
+		//encryption
+		'secret'=> getenv('SECRET'),
+		//contact address
+		'contact' =>getenv('CONTACT')
+    ],
 </pre>
 
 #### Migrations
@@ -47,9 +94,11 @@ CONTACT="jan.fait@mapp.com"
 Before MappForce becomes operational, you have to run the */storage/run_migration.php* file. This will initialize the database with default settings which can be edited in UI later. Also, it will make a copy of the existing database and store it with a timestamp value as a separate file as a backup.
 **Remove of otherwise protect the run_migration.php file when deploying in production.** Running this file again will erase your existing database and replace it with a new instance.
 
-#### Folder access
+#### Folder access, Virtual Host
 
-Make sure the sqlite database in the project /storage folder is writeable
+Point your virtual host's document root into the /public folder.
+Make sure the sqlite database in the project /storage folder is writeable, your hosting does not allow access to the root folder and other security settings.
+
 
 
 ### 1\. Requirements
@@ -196,15 +245,15 @@ Although the closest entity to Salesforce Campaign is the Mapp CEP Group, the ma
 
 <span class="mdl-list__item-text-body">MappForce API layer uses HTTP Basic Authentication. To access the API, use the same credentials that you have used to login to the Admin section. The authentication must follow the below pattern:
 
-<pre>mapp_system_instance|username:password</pre>
+<pre>username:password</pre>
 
 For example:
 
-<pre>mapp_marketing|my.api.user@mapp.com:mysecretpassword123</pre>
+<pre>my.api.user@mapp.com:mysecretpassword123</pre>
 
 An authenticated request will look like this:
 
-<pre>$ curl -u mapp_marketing|my_api.user@mapp.com:mysecretpassword123 https://YOUR-SERVER-NAME.com/mappforce/api/ </pre>
+<pre>$ curl -u my_api.user@mapp.com:mysecretpassword123 https://YOUR-SERVER-NAME.com/mappforce/api/ </pre>
 
 </span>
 
@@ -256,7 +305,7 @@ Note that the part enclosed in curly brackets, starting with a dollar sign ,f.e.
 
 With the above JSON Map stored in a file named data.json, you can now launch the request to a MappForce endpoint like this:
 
-<pre>$ curl -d @my/folder/data.json -u mapp_marketing|my_api.user@mapp.com:mysecretpassword123 -H 'Accept: application/json' -X POST https://YOUR-SERVER-NAME.com/mappforce/api/sfdc/lead/create </pre>
+<pre>$ curl -d @my/folder/data.json -u my_api.user@mapp.com:mysecretpassword123 -H 'Accept: application/json' -X POST https://YOUR-SERVER-NAME.com/mappforce/api/sfdc/lead/create </pre>
 
 If succesful, MappForce will collect the response from Salesforce and pass it over to you in a JSON formatted response:
 
@@ -276,7 +325,7 @@ A request body of an upsert call looks exactly like the one used above for a cre
 
 Note that the Request URL below does not cite any specific Salesforce object attributes due to the fact that either a Lead or Contact record will be created/updated.
 
-<pre>$ curl -d @my/folder/data.json -u mapp_marketing|my_api.user@mapp.com:mysecretpassword123 -H 'Accept: application/json' -X POST https://YOUR-SERVER-NAME.com/mappforce/api/sfdc/upsert?identifier=email </pre>
+<pre>$ curl -d @my/folder/data.json -u my_api.user@mapp.com:mysecretpassword123 -H 'Accept: application/json' -X POST https://YOUR-SERVER-NAME.com/mappforce/api/sfdc/upsert?identifier=email </pre>
 
 Success Response returns record details. See the next section to understand campaign and campaign_member response nodes.
 
@@ -308,7 +357,7 @@ A request body of an upsert call looks exactly like the one used above for a cre
 
 The request with
 
-<pre>$ curl -d @my/folder/data.json -u mapp_marketing|my_api.user@mapp.com:mysecretpassword123 -H 'Accept: application/json' -X POST https://YOUR-SERVER-NAME.com/mappforce/api/sfdc/upsert?identifier=email </pre>
+<pre>$ curl -d @my/folder/data.json -u my_api.user@mapp.com:mysecretpassword123 -H 'Accept: application/json' -X POST https://YOUR-SERVER-NAME.com/mappforce/api/sfdc/upsert?identifier=email </pre>
 
 Success Response
 
