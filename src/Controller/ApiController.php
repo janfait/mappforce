@@ -82,6 +82,7 @@ class ApiController extends Controller
 		}
 		return true;
 	}
+
 	
 	private function _countryMap($string,$iso = 'alpha-2'){
 		
@@ -116,6 +117,16 @@ class ApiController extends Controller
 			
 		}
 		$output['payload'] = $routes;
+		
+		
+        return $this->renderOutput($request,$response,$output);
+    }
+	
+	public function temp(Request $request, Response $response, $args)
+	{
+		$output = $this->default_output;
+		
+		$output['payload'] = $this->container->CountryMap;
 		
 		
         return $this->renderOutput($request,$response,$output);
@@ -270,7 +281,7 @@ class ApiController extends Controller
 		}
 
 		if(isset($fields['user.ISOCountryCode'])){
-			$this->_countryMap($fields['user.ISOCountryCode'],'alpha-2');
+			$fields['user.ISOCountryCode'] = $this->_countryMap($fields['user.ISOCountryCode'],'alpha-2');
 		}
 		
 		return $fields;

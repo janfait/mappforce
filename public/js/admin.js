@@ -148,8 +148,9 @@ $(function(){
 
 $(".input-new").on('keyup',function(){
 	var v = $(this).val();
+	var t = $(this).siblings("input[name='cep_object']").val();
 	$(this).siblings("input[name='cep_name']").val(v);
-	$(this).siblings("input[name='cep_api_name']").val("user.MemberAttribute."+v);
+	$(this).siblings("input[name='cep_api_name']").val(t+".MemberAttribute."+v);
 });
 
 ///////////////////////SFDC FIELD TYPE SEARCH UPON EDIT OF SFDC NAME/////////////////////////////

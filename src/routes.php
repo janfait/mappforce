@@ -53,6 +53,8 @@ $app->group('/api', function() {
 	$this->get('', 'MappIntegrator\Controller\ApiController:root');
 	$this->get('/', 'MappIntegrator\Controller\ApiController:root');
 	//mapping
+	$this->get('/temp', 'MappIntegrator\Controller\ApiController:temp');
+	//mapping
 	$this->get('/mapping', 'MappIntegrator\Controller\ApiController:mappingGetAll');
 	///////////////////////////////////////////////////////////
 	// CEP GROUP

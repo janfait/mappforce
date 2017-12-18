@@ -56,7 +56,9 @@ $container['SforceClient'] = function ($c) {
 
 // Salesforce Client
 $container['CountryMap'] = function ($c) {
-    return json_decode('/Resources/countrymap.json',true);
+	$countrymap = file_get_contents("/Resources/countrymap.json",true);
+	$countrymap = json_decode($countrymap,true);
+	return $countrymap[0];
 };
 
 // Twig
