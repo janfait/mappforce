@@ -4,17 +4,20 @@ use Slim\Container as Container;
 use \MappIntegrator\Setting as Setting;
 use Slim\Views\Twig as TwigViews;
 use SalesforceSoapClient;
-use Stevenmaguire\OAuth2\Client\Provider\Salesforce
-as SalesforceOauth;
+use Stevenmaguire\OAuth2\Client\Provider\Salesforce as SalesforceOauth;
 use Slim\Http\Request;
 use Slim\Http\Response; 
 /**
  * Class Controller
  * @package MappIntegrator\Controller
+ *
+ *
+ * Base Controller handles Authentication and Authorization of MappForce against a given Salesforce instance
+ * Handles all tokens and their storage
+ * Most functions have side-effects acessing and storing values in class members.
  */
-abstract class Controller
+class Controller
 {
-    /** @var TwigViews view */
     protected $view;
 	public $container;
 	public $call_stack;
@@ -58,7 +61,8 @@ abstract class Controller
 			'AUTHORIZATION_SUCCESS' => 'MappForce app is now succesfully authorized against Salesforce',
 			'NO_CONNECTION_SFDC' => 'Failed to connect to Salesforce. Please set or review your connection in Settings section.',
 			'SESSION_EXPIRED' => 'Your session has expired, please login again.',
-			'STORAGE_SUCCESS' => 'Your settings have been stored successfuly.'
+			'STORAGE_SUCCESS' => 'Your settings have been stored successfuly.',
+			'LOGIN_FAILED_SERVER' => 'Failed to connect to Salesforce. This is a server error. Please try again later'
 		);
 		$this->oauth = $this->settings['sfdc']['oauth'];
 		$this->call_stack = array();
@@ -67,11 +71,14 @@ abstract class Controller
 		$this->default_ui_status = array('error'=>false,'message'=>null,'success'=>false);
 		$this->mapping_exceptions = array('LeadId','ContactId','Status','Id');
 		
-		//connection settings
-		$this->sfdc_connection_settings = Setting::where([['realm','sfdc'],['category','connection']])->get();
-
+		//register a logger
+		if($this->settings['debug']){
+			$this->logger = $this->container->devlogger;
+		}else{
+			$this->logger = $this->container->prodlogger;
+		}
 		//attempt sfdc login
-		$this->sfdc_login();
+		$this->sfdcLogin();
 
 		if(!$this->sfdc_session){
 			
@@ -84,6 +91,7 @@ abstract class Controller
 		}
 		
     }
+
 	
     /**
      * Builds an array of settings collected from the database depending on oauth property
@@ -91,7 +99,7 @@ abstract class Controller
      * @param none
      * @return none
      */
-	public function _sfdc_collect_settings()
+	public function _sfdcCollectSettings()
 	{
 		
 		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
@@ -118,8 +126,13 @@ abstract class Controller
 			
 	}
 	
-	
-	public function _sfdc_check_settings()
+	/**
+     * Checks whether all required credentials are set before attempting a login
+     *
+     * @param none
+     * @return boolean
+     */
+	public function _sfdcCheckSettings()
 	{
 		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
 		//pass the sfdc settings property
@@ -141,8 +154,13 @@ abstract class Controller
 		}
 		
 	}
-	
-	public function _sfdc_check_authorization_settings()
+	/**
+     * Checks whether all required credentials are set before attempting an app authorization
+     *
+     * @param none
+     * @return boolean
+     */	
+	public function _sfdcCheckAuthSettings()
 	{
 		
 		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
@@ -154,8 +172,13 @@ abstract class Controller
 		}
 		return false;
 	}
-	
-	public function _sfdc_validate_access_token()
+	/**
+     * Checks whether a currently available access token has expired and if so, requests and stores a new one using the refresh token
+     *
+     * @param none
+     * @return boolean
+     */	
+	private function _sfdcValidateAccessToken()
 	{
 		
 		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
@@ -164,18 +187,23 @@ abstract class Controller
 		$token_expired = time() > intval($expiry);
 		if ($token_expired){
 			//use refresh token to obtain a new access token
-			$refresh_token = $this->_sfdc_refresh_token();
+			$refresh_token = $this->_sfdcRefreshToken();
 			//if request fails
 			if(isset($refresh_token['error'])){
 				return false;
 			}
-			$this->response_stack[] = array(__FUNCTION__=>$this->_sfdc_store_oauth_token($refresh_token));
+			$this->response_stack[] = array(__FUNCTION__=>$this->_sfdcStoreOauthToken($refresh_token));
 		}
 		return true;
 		
 	}
-	
-	public function _sfdc_store_oauth_token($token)
+	/**
+     * Stores all required nodes of the arriving OAuth token by mapping them to database Settings, returns true (success) and false (error)
+     *
+     * @param array $token 			An array received from the OAuth endpoint, should include access_token, refresh_token, issued_at and id nodes
+     * @return boolean
+     */	
+	private function _sfdcStoreOauthToken($token)
 	{
 		
 		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
@@ -217,13 +245,18 @@ abstract class Controller
 		return true;
 		
 	}
-	
-	public function _sfdc_collect_oauth_token($code)
+	/**
+     * Requests OAuth token from SFDC OAuth endpoint
+     *
+     * @param string $code 			An array received from the OAuth endpoint, should include access_token, refresh_token, issued_at and id nodes
+     * @return array $response
+     */	
+	private function _sfdcCollectOauthToken($code)
 	{
 		
 		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
 		//collect settings due to a redirect between MappForce and authorization url
-		$this->_sfdc_collect_settings();
+		$this->_sfdcCollectSettings();
 		//define the POST parameters
 		$params = "code=" . $code
 		   . "&grant_type=authorization_code"
@@ -253,8 +286,13 @@ abstract class Controller
 		return $response;
 			
 	}
-	
-	public function _sfdc_refresh_token()
+	/**
+     * Requests Refresh token from SFDC OAuth endpoint
+     *
+     * @param none			
+     * @return array $response
+     */	
+	private function _sfdcRefreshToken()
 	{
 		
 		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
@@ -286,8 +324,13 @@ abstract class Controller
 		$this->response_stack[] = array(__FUNCTION__=>$response);
 		return $response;
 	}
-	
-	public function _sfdc_collect_identity($id)
+	/**
+     * Calls the SFDC Identity URL to obtain a valid endpoint for API calls
+     *
+     * @param none			
+     * @return array $response
+     */	
+	private function _sfdcCollectIdentity($id)
 	{
 		
 		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
@@ -320,8 +363,13 @@ abstract class Controller
 		$this->response_stack[] = array(__FUNCTION__=>$response);
 		return $response;
 	}
-	
-	public function _sfdc_collect_api_server(){
+	/**
+     * Collects the SFDC API Endpoint address, returns its value (success) or false (error)
+     *
+     * @param none			
+     * @return string
+     */	
+	public function _sfdcCollectApiServer(){
 		
 		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
 
@@ -330,11 +378,14 @@ abstract class Controller
 		if(!empty($sfdc_api_server->value)){
 			$sfdc_api_server = $this->_decrypt($sfdc_api_server->value,$this->settings['secret']);
 		}else{
-			$sfdc_identity = $this->_sfdc_collect_identity($this->sfdc_settings['sfdc_server_url']);
+			$sfdc_identity = $this->_sfdcCollectIdentity($this->sfdc_settings['sfdc_server_url']);
 			if(isset($sfdc_identity['urls'])){
+				//extract the api server url
 				$sfdc_api_server = $sfdc_identity['urls']['partner'];
+				//replace the version with "latest" keywords
 				$sfdc_api_server = str_replace("{version}","latest",$sfdc_api_server);
-				$sfdc_api_server = $this->_sfdc_store_api_server($sfdc_api_server);
+				//store it
+				$sfdc_api_server = $this->_sfdcStoreApiServer($sfdc_api_server);
 			}else{
 				$sfdc_api_server = false;
 			}
@@ -344,8 +395,13 @@ abstract class Controller
 		return $sfdc_api_server;
 
 	}
-	
-	public function _sfdc_store_api_server($value){
+	/**
+     * Stores the SFDC API Endpoint address, returns its value 
+     *
+     * @param string $value			
+     * @return string $value
+     */	
+	private function _sfdcStoreApiServer($value){
 		
 		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
 
@@ -360,8 +416,13 @@ abstract class Controller
 		
 		return $value;
 	}
-
-	public function sfdc_login()
+	/**
+     * Attempts a login to SFDC, populates persistent session header with access token obtain in the OAuth procedure
+     *
+     * @param none		
+     * @return string $value
+     */	
+	public function sfdcLogin()
 	{
 		
 		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
@@ -374,7 +435,7 @@ abstract class Controller
 			$this->container->Sforce->wsdl,null,array('exceptions'=>true,'trace'=>false)
 		);
 		//collect the settings from database
-		$this->_sfdc_collect_settings();
+		$this->_sfdcCollectSettings();
 		//if oauth method not applies
 		if(!$this->oauth){
 			//try to login in create sfdc session
@@ -384,18 +445,14 @@ abstract class Controller
 			);
 		}else{
 			//if required sfdc settings are not populated
-			if($this->_sfdc_check_settings()){				
+			if($this->_sfdcCheckSettings()){				
 				//if access token expired, request new one through a refresh token
-				$this->_sfdc_validate_access_token();
+				$this->_sfdcValidateAccessToken();
 				//collect the returned api server url
-				$sfdc_api_server = $this->_sfdc_collect_api_server();
+				$sfdc_api_server = $this->_sfdcCollectApiServer();
 				//set connection headers
-				/*
-				$sfdc_assignment_header = new \AssignmentRuleHeader("", false);
-				$this->sfdc_connection->setAssignmentRuleHeader($sfdc_assignment_header);
-				$sfdc_email_header = new \EmailHeader(false,false,true);
-				$this->sfdc_connection->setEmailHeader($sfdc_email_header);
-				*/
+				/*$sfdc_assignment_header = new \AssignmentRuleHeader("", false);
+				$this->sfdc_connection->setAssignmentRuleHeader($sfdc_assignment_header);*/
 				try{
 					//attach session ID and endpoint to the client directly, bypassing the login method
 					$this->sfdc_client->setEndpoint($sfdc_api_server);
@@ -403,7 +460,8 @@ abstract class Controller
 					$this->sfdc_session = true;
 				}catch(\Exception $e){
 					$this->sfdc_session = false;
-					var_dump($e->faultstring);
+					$this->response_stack[] = array(__FUNCTION__=>array('session'=>$this->sfdc_session,'error'=>$e->faultstring,'connection'=>$this->sfdc_conection));
+					var_dump($this->response_stack);
 					die();
 				}
 			}
@@ -414,6 +472,22 @@ abstract class Controller
 
 	}
 	
+	
+	public function _generateKey(){
+		return openssl_random_pseudo_bytes(40);
+	}
+	
+	public function _collectKey(){
+
+	}
+	/**
+     * Helper function for encryption given a key
+     *
+     * @param string $data
+	 * @params string $key
+	 *
+     * @return string $data
+     */	
 	public function _encrypt($data, $key)
 	{
 		if(empty($data)){
@@ -424,7 +498,14 @@ abstract class Controller
 		$encrypted = openssl_encrypt($data, 'aes-256-cbc', $encryption_key, 0, $iv);
 		return base64_encode($encrypted . '::' . $iv);
 	}
-	 
+	/**
+     * Helper function for decryption given a key
+     *
+     * @param string $data
+	 * @params string $key
+	 *
+     * @return string $data
+     */	
 	public function _decrypt($data, $key)
 	{
 		if(empty($data)){

@@ -1,26 +1,26 @@
 <?php
 
 use \MappIntegrator\Setting as Setting;
-use \MappIntegrator\CepUser as CepUser;
 use Slim\Http\Request;
 use Slim\Http\Response;
 
-// Authenticator using Mapp /systemuser domain to get user data
+/**
+ * Authentication middleware for API part
+ * authentication is delegated to a Mapp CEP instance by 
+ *
+ * a) attempting an API call against that system and if successful ..
+ * b) validating that the user exists as a system user in that CEP instance
+ * 
+ * MappForce does not store any of these details in its database, only in the SESSION variables
+ *
+ */	
 class MappApiAuthenticator
 {	
 
 	public function __construct($container) {
         $this->container = $container;
     }
-	
-	private function storeUser($data){
-		//update or create the user by instance and username
-		$user = CepUser::updateOrCreate([
-			'instance'=>$data['instance'],
-			'username'=>$data['username']
-		],$data);
-	}
-	
+
 	private function validateJson($body){
 		 json_decode($body);
 	     return (json_last_error() == JSON_ERROR_NONE);
@@ -38,11 +38,13 @@ class MappApiAuthenticator
 		$host = $request -> getUri()->getHost();
         $scheme = $request -> getUri()->getScheme();
         $server_params = $request -> getServerParams();
+		$ip = $server_params['REMOTE_ADDR'];
 		$body = $request ->getBody();
 		$post = $request -> isPost();
+		$failed_attempts = array();
         $user = false;
         $password = false;
-
+		
 		//collect instance and username
 		if (isset($server_params["PHP_AUTH_USER"])) {
 			$user = $server_params["PHP_AUTH_USER"];
@@ -59,8 +61,9 @@ class MappApiAuthenticator
 		if($this->container->has('mappCep')) {
 			//initialize a blank Mapp CEP instance
 			$mapp_cep = $this->container->mappCep;
-			//collect instance
-			$instance = $instance = $this->container->settings['cep']['instance'];
+			//collect instance from settings
+			$instance = $this->container->settings['cep']['instance'];
+			//if instance not found in settings, return error
 			if(empty($instance)){
 				return $this->renderError($request,$response,"Missing Mapp CEP instance setting",500);
 			}
@@ -91,7 +94,12 @@ class MappApiAuthenticator
     }
 	
 }
-
+/**
+ * Authentication middleware for Admin part
+ * authentication is only validating the presence of session variables and the length of inactivity of the user 
+ *
+ *
+ */	
 class SessionAuthenticator {
 
 	public function __construct($container) {

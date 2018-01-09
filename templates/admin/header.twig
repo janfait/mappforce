@@ -15,7 +15,7 @@
 				<div class="mdl-layout-spacer"></div>
 				<!-- App Header Actions. You can use different kind of icons and buttons in here -->
 				<nav class="mdl-navigation">
-					{{ user.firstName }} {{ user.lastName }}
+					{{ user.firstName|e }} {{ user.lastName|e }}
 					<a id="user" href="#"><i id="user-nav-icon" class="material-icons">person</i></a>
 					<div class="mdl-tooltip" data-mdl-for="user-nav-icon">
 						User Details

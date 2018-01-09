@@ -10,10 +10,31 @@ use Slim\Http\Response;
 /**
  * Class ApiController
  * @package MappIntegrator\Controller
+ *
+ *
+ * The package functions are typically divided into two categories.
+ *
+ * a) Wrapper function - this function consumes the PSR7 request, collects and validates query parameters and message body which are then passed to the executor function, returns a PSR7 response 
+ * b) Executor function - typically starts with _sfdc which accepts input from the Wrapper function and wraps around the Salesforce native SOAP API Toolkit functions, passing the resposne back to the Wrapper
+ *
+ 
+ 
  */
 class ApiController extends Controller
 {
 	
+	
+	
+	 /**
+     * Renderer for output adding debug data is query debug parameter and debug settings are true
+     *
+     * @param ServerRequestInterface $request PSR7 request
+     * @param ResponseInterface $response     PSR7 response
+     * @param array $data                  	  Data to be rendered as JSON to the client
+	 * @param numeric $status                 HTTP Status code for the Response
+     *
+     * @return ResponseInterface
+     */
 	
 	private function renderOutput(Request $request, Response $response, $data, $status = 200){
 		
@@ -25,22 +46,24 @@ class ApiController extends Controller
 				'response_stack' => $this->response_stack
 			);
 		}
-		
-		$csfr = array();
-		$csfr['namekey'] = $this->container->csrf->getTokenNameKey();
-		$csfr['valuekey'] = $this->container->csrf->getTokenValueKey();
-		$csfr['name'] = $request->getAttribute($csfr['namekey']);
-		$csfr['value'] = $request->getAttribute($csfr['valuekey']);
-		
-		//add standard body elements
-		$body['debug'] = $this->container->get('settings')['debug'];
-		$body['user'] = $request->getAttribute('user');
-		$body['csfr'] = $csfr;
-
-		$this->container->logger->info(json_encode($data));
+		//log event
+		$this->logger->info(json_encode($data));
 		
 		return $response->withJson($data,$status);
 	}
+	
+	/**
+     * Renderer for error outputs, matches error code with corresponding message
+     *
+     * @param ServerRequestInterface $request PSR7 request
+     * @param ResponseInterface $response     PSR7 response
+	 * @param string $error_code              Must be one of array keys in Contoller->messages
+     * @param string $error_message           Message sent to the client with error details, if valid error_code given, overwritten with Controller->messages[$error_code]	 
+     * @param array $data                  	  Data to be rendered as JSON to the client
+	 * @param numeric $status                 HTTP Status code for the Response
+     *
+     * @return ResponseInterface
+     */
 	
 	private function renderError(Request $request, Response $response, $error_code = null, $error_message = null, $function = null, $status = 400){
 		
@@ -59,13 +82,20 @@ class ApiController extends Controller
 				'response_stack' => $this->response_stack
 			);
 		}
-		
-		$this->container->logger->error(json_encode($data));
+		//log event
+		$this->logger->error(json_encode($data));
 		
 		return $response->withJson($data,$status);
 		
 	}
 	
+	/**
+     * Helper function validating that object attribute in the requests is one of valid objects
+     *
+     * @param string $object		Any of $this->valid_objects
+     *
+     * @return boolean
+     */
 	private function _validateObject($object){
 		if(in_array($object, $this->valid_objects)){
 			return true;
@@ -73,8 +103,15 @@ class ApiController extends Controller
 			return false;
 		}
 	}
-	
-	private function _validateQuery($query,$required,$function=null){
+	/**
+     * Helper function validating presence of query parameters on a particular route
+     *
+     * @param string $query			Query string as aresult of $request->getQueryParams()
+	 * @param array $required		An array of required parameters for a route
+     *
+     * @return boolean
+     */
+	private function _validateQuery($query,$required){
 		foreach($required as $r){
 			if(!array_key_exists($r,$query)){
 				return false;
@@ -83,19 +120,32 @@ class ApiController extends Controller
 		return true;
 	}
 
-	
-	private function _countryMap($string,$iso = 'alpha-2'){
+	/**
+     * Mapping function for country variables. Assumes the presence of the CountryMap object in Container, see ../dependencies.php
+     *
+     * @param string $string		A string to be mapped, typically a ISO-3166 alpha-2 or a ISO-3166 country name
+	 * @param string $iso			A designation of the ISO standard to be returned. If alpha-2, the function returns a country code, else a country name
+     *
+     * @return string
+     */
+	private function _countryMap($string,$iso){
 		
+		//retrieve country map
 		$country_map = $this->container->CountryMap;
 		
+		//if not found, return input
+		if(empty($country_map)){
+			return $string;
+		}
+		//if iso is alpha-2 flip the map
 		if($iso=='alpha-2'){
 			$country_map = array_flip($country_map);
 		}
-
+		//return a corresponding item or if not found the input
 		if(array_key_exists($string,$country_map)){
 			return $country_map[$string];
 		}else{
-			return "";
+			return $string;
 		}
 		
 	}
@@ -103,11 +153,18 @@ class ApiController extends Controller
 	////////////////////////////////////////////////
 	// Root
 	////////////////////////////////////////////////
-
+	
+	 /**
+     * Root endpoint handler for the API. Welcomes user and lists all endpoitns
+     *
+     * @param ServerRequestInterface $request PSR7 request
+     * @param ResponseInterface $response     PSR7 response
+     *
+     * @return ResponseInterface
+     */
     public function root(Request $request, Response $response, $args)
 	{
 		$output = $this->default_output;
-		
 		$router = $this->container->router->getRoutes();
 		$routes = array("Welcome to MappForce, these are the supported API endpoints");
 		foreach($router as $r){
@@ -118,31 +175,38 @@ class ApiController extends Controller
 		}
 		$output['payload'] = $routes;
 		
-		
         return $this->renderOutput($request,$response,$output);
     }
-	
-	public function temp(Request $request, Response $response, $args)
-	{
-		$output = $this->default_output;
-		
-		$output['payload'] = $this->container->CountryMap;
-		
-		
-        return $this->renderOutput($request,$response,$output);
-    }
-	
+
 	////////////////////////////////////////////////
 	// Mapp CEP specific endpoints
 	////////////////////////////////////////////////
 	
+	/**
+     * Root endpoint for CEP group, returns the currently approached API version of Mapp CEP
+     *
+     * @param ServerRequestInterface $request PSR7 request
+     * @param ResponseInterface $response     PSR7 response
+     *
+     * @return ResponseInterface
+     */
 	public function cepRoot(Request $request, Response $response, $args)
 	{
 		$output = $this->container->mappCep->getApiVersion();
         return $this->renderOutput($request,$response,$output);
     }
 	
-	
+	/**
+     * Retrieves a CEP contact based on email
+     *
+     * @param ServerRequestInterface $request PSR7 request
+     * @param ResponseInterface $response     PSR7 response
+	 *
+	 * Query parameters:
+	 * @param string email     email address of the contact to be retrieve
+     *
+     * @return ResponseInterface
+     */	
 	public function cepGetContact(Request $request, Response $response, $args)
 	{
 		$query = $request -> getQueryParams();
@@ -163,8 +227,19 @@ class ApiController extends Controller
         return $this->renderOutput($request,$response,$output);
     }
 	
-	
-		
+	/**
+     * Upserts a CEP contact based on email
+     *
+     * @param ServerRequestInterface $request PSR7 request
+     * @param ResponseInterface $response     PSR7 response
+	 *
+	 * Query parameters:
+	 * @param string email     email address of the contact to be upserted
+	 * Message Body:
+	 * @param array     array of attribute name=>value pairs
+     *
+     * @return ResponseInterface
+     */		
 	public function cepUpsertContact(Request $request, Response $response, $args)
 	{
 		$query = $request -> getQueryParams();
@@ -189,29 +264,62 @@ class ApiController extends Controller
 	// SFDC specific endpoints
 	////////////////////////////////////////////////
 	
+	/**
+     * Makes a call to the SFDC identity service and returns all output
+     *
+     * @param ServerRequestInterface $request PSR7 request
+     * @param ResponseInterface $response     PSR7 response
+	 *
+     *
+     * @return ResponseInterface
+     */	
 	public function sfdcIdentity(Request $request, Response $response, $args)
 	{
 		$output = $this->default_output;
 		$id = Setting::where('name','sfdc_server_url')->first();
 		$id = $this->_decrypt($id->value,$this->settings['secret']);
-		$output['payload'] = $this->_sfdc_collect_identity($id);
+		$output['payload'] = $this->_sfdcCollectIdentity($id);
         return $this->renderOutput($request,$response,$output);
     }
-	
+	/**
+     * Makes a call to the SFDC identity service and returns API endpoint for MappForce (urls->partner)
+     *
+     * @param ServerRequestInterface $request PSR7 request
+     * @param ResponseInterface $response     PSR7 response
+	 *
+     *
+     * @return ResponseInterface
+     */
 	public function sfdcApiEndpoint(Request $request, Response $response, $args)
 	{
 		$output = $this->default_output;
-		$output['payload'] = $this->_sfdc_collect_api_server();
+		$output['payload'] = $this->_sfdcCollectApiServer();
         return $this->renderOutput($request,$response,$output);
     }
-	
+	/**
+     * Makes a call to the SFDC getUserInfo() and returns the data of the user on who's behalf MappForce has authenticated to SFDC
+     *
+     * @param ServerRequestInterface $request PSR7 request
+     * @param ResponseInterface $response     PSR7 response
+	 *
+     *
+     * @return ResponseInterface
+     */
 	public function sfdcUser(Request $request, Response $response, $args)
 	{
 		$output = $this->default_output;
 		$output['payload'] = $this->sfdc_client->getUserInfo();
         return $this->renderOutput($request,$response,$output);
     }
-	
+	/**
+     * Describes the SFDC object given in the route attribute placeholder
+     *
+     * @param ServerRequestInterface $request PSR7 request
+     * @param ResponseInterface $response     PSR7 response
+	 *
+     *
+     * @return ResponseInterface
+     */
 	public function sfdcObject(Request $request, Response $response, $args)
 	{	
 		//collect object
@@ -223,7 +331,15 @@ class ApiController extends Controller
 		$sfdc_response = $this->sfdc_client->describeSObject($object);
         return $response->withStatus(200);
 	}
-	
+	/**
+     * Returns an array of fields for an SFDC object given in the route attribute placeholder
+     *
+     * @param ServerRequestInterface $request PSR7 request
+     * @param ResponseInterface $response     PSR7 response
+	 *
+     *
+     * @return ResponseInterface
+     */
 	public function sfdcObjectFields(Request $request, Response $response, $args)
 	{
 		$output = $this->default_output;
@@ -238,11 +354,24 @@ class ApiController extends Controller
 		$output['payload'] = $sfdc_fields;
         return $this->renderOutput($request,$response,$output);
 	}
-	
+	/**
+     * Supplies the default campaign member status setting from the settings table
+     *
+     * @return string
+     */
 	private function sfdcGetDefaultStatus(){
 		return Setting::where('name','campaign_member_status_default')->first()->value;
 	}
-
+	/**
+     * Returns a mapping of request body attribtues for a particular SFDC object
+     * to their corresponding SFDC attributes based on mapping table
+     *
+     * @param ServerRequestInterface $request PSR7 request
+     * @param ResponseInterface $response     PSR7 response
+	 *
+     *
+     * @return ResponseInterface
+     */
 	public function sfdcMap(Request $request, Response $response, $args)
 	{	
 		//get body of request and request params
@@ -262,7 +391,16 @@ class ApiController extends Controller
 		
         return $this->renderOutput($request,$response,$output);
 	}
-	
+	/**
+     * Returns a mapping of a supplied array of SFDC attribute keys to 
+     * their corresponding CEP API attribute names based on mapping table
+     *
+     * @param string $object				Valid name of a SFDC object
+     * @param array $body					Array of attribute name=>value pairs
+	 *
+     *
+     * @return array
+     */
 	private function _cepMap($object,$body)
 	{
 		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
@@ -286,7 +424,16 @@ class ApiController extends Controller
 		
 		return $fields;
 	}
-	
+	/**
+     * Returns a mapping of a supplied array of CEP attribute keys to 
+     * their corresponding SFDC API attribute names based on mapping table
+     *
+     * @param string $object				Valid name of a SFDC object
+     * @param array $body					Array of attribute name=>value pairs
+	 *
+     *
+     * @return array
+     */
 	private function _sfdcMap($object,$body)
 	{
 		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
@@ -323,11 +470,24 @@ class ApiController extends Controller
 			}else if(in_array($item,$this->mapping_exceptions) | $object=='CampaignMember'){
 				$fields[$item] = $value;
 			}
+			if(isset($fields['Country'])){
+				$fields['Country'] = $this->_countryMap($fields['Country'],'alpha-2');
+			}
 		}
 		
 		return $fields;
 	}
-	
+	/**
+     * Returns the results of a SOQL query supplied as a query parameter
+     *
+     * @param ServerRequestInterface $request PSR7 request
+     * @param ResponseInterface $response     PSR7 response
+	 *
+	 * Query parameters:
+	 * @param string q     a valid query in SOQL language
+	 *
+     * @return ResponseInterface
+     */
 	public function sfdcQuery(Request $request, Response $response,$args)
 	{
 		//get body of request and request params
@@ -344,7 +504,13 @@ class ApiController extends Controller
 		
 		return $this->renderOutput($request,$response,$output);
 	}
-	
+	/**
+     * Returns the results of a SOQL query
+     *
+	 * @param string query     a valid query in SOQL language
+	 *
+     * @return array
+     */
 	private function _sfdcQuery($query)
 	{
 		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
@@ -377,7 +543,17 @@ class ApiController extends Controller
 		
 		return $results;
 	}
-	
+	/**
+     * Combines the _sfdcQuery and _sfdcTransferRecord to search and transfer objects from SFDC to CEP using a defined mapping
+     *
+     * @param ServerRequestInterface $request PSR7 request
+     * @param ResponseInterface $response     PSR7 response
+	 *
+	 * Message body:
+	 * @param string q     a valid query in SOQL language
+	 *
+     * @return ResponseInterface
+     */
 	public function sfdcTransferQuery(Request $request, Response $response,$args)
 	{
 		//get body of request and request params
@@ -410,7 +586,17 @@ class ApiController extends Controller
 		
 		return $this->renderOutput($request,$response,$output);
 	}
-	
+	/**
+     * Transfers a given SFDC record object to CEP as a contact
+     *
+     * @param stdClass $record				 SFDC record
+     * @param string $object     			 a valid name of SFDC object
+	 *
+	 * Message body:
+	 * @param string q     					 a valid query in SOQL language
+	 *
+     * @return array
+     */
 	private function _sfdcTransferRecord($record,$object){
 		
 		//map the record to CEP
@@ -424,7 +610,19 @@ class ApiController extends Controller
 		return $transfer_result;
 		
 	}
-	
+	/**
+     * Adds a supplied lead or contact record to a campaign as a campaign member with a given status
+     *
+	 * @param ServerRequestInterface $request PSR7 request
+     * @param ResponseInterface $response     PSR7 response
+	 *
+	 * Query Parameters:
+	 * @param string object_id     			an 18-Digit ID of the SFDC object
+	 * @param string campaign_id     		an 18-Digit ID of the SFDC campaign
+	 * @param string status (optional)		a valid Campaign Member Status
+	 *
+     * @return ResponseInterface
+     */
 	public function sfdcAddToCampaign(Request $request, Response $response, $args)
 	{		
 		//get body of request and request params
@@ -456,7 +654,16 @@ class ApiController extends Controller
         return $this->renderOutput($request,$response,$output);
 	}
 
-	
+	/**
+     * Adds a supplied lead or contact record to a campaign as a campaign member with a given status
+     *
+     * @param string $object     			a valid name of SFDC object
+	 * @param string object_id     			an 18-Digit ID of the SFDC object
+	 * @param string campaign_id     		an 18-Digit ID of the SFDC campaign
+	 * @param string status (optional)		a valid Campaign Member Status
+	 *
+     * @return stdClass
+     */
 	private function _sfdcAddToCampaign($object,$object_id,$campaign_id,$status= null)
 	{
 		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
@@ -487,7 +694,18 @@ class ApiController extends Controller
 		
 		return $campaign_member;
 	}
-	
+	/**
+     * Creates a SFDC object specified in attribute using attributes supplied in message body
+     *
+	 * @param ServerRequestInterface $request PSR7 request
+     * @param ResponseInterface $response     PSR7 response
+	 *
+	 * Message Body:
+	 * @param array     			an array of name:value attribute pairs
+	 *
+	 *
+     * @return ResponseInterface
+     */
 	public function sfdcCreate(Request $request, Response $response, $args)
 	{		
 		//get body of request and request params
@@ -512,7 +730,19 @@ class ApiController extends Controller
         return $this->renderOutput($request,$response,$output);
 	}
 	
-	
+	/**
+     * Creates a SFDC object specified in attribute using attributes supplied in message body
+     *
+	 * @param string $object				a valid name of a SFDC object in lower case
+     * @param array	 $body     				an array with name:value attribute pairs
+	 *
+	 * Query Parameters:
+	 * @param string object_id     			an 18-Digit ID of the SFDC object
+	 * @param string campaign_id     		an 18-Digit ID of the SFDC campaign
+	 * @param string status (optional)		a valid Campaign Member Status
+	 *
+     * @return array
+     */
 	private function _sfdcCreate($object,$body)
 	{
 		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
@@ -530,155 +760,24 @@ class ApiController extends Controller
 		return get_object_vars($sfdc_response[0]);
 	}
 	
-	public function sfdcUpsertBy(Request $request, Response $response, $args)
-	{
-		//get body of request and request params
-		$body = $request->getParsedBody();
-		$query = $request->getQueryParams();
-		//prepare default output
-		$output = $this->default_output;
-		//collect the output
-		$object = $request->getAttribute('object');
-		//validate object
-		if(!$this->_validateObject($object)){
-			$this->renderError($request,$response,'OBJECT_NOT_ALLOWED');
-		}
-		//validate identifier
-		if(!isset($query['identifier'])){
-			$this->renderError($request,$response,'MISSING_REQUIRED_PARAMETER');
-		}else{
-			$record = $this->_sfdcUpsertBy(ucfirst($query['identifier']),$object,$body);
-			$output['payload'] = (array) $record;
-			return $this->renderOutput($request,$response,$output);
-		}
-		
-	}
-	
-	private function _sfdcUpsertBy($field,$object,$body){
-		
-		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
-		//map
-		$fields = $this->_sfdcMap($object,$body);
-		//check that field is supplied in the body
-		if(isset($fields[$field])){
-			$search_query = "SELECT Id,".$field." FROM ".ucfirst($object)." WHERE ".$field." = '".$fields[$field]."' LIMIT 1";
-			$this->call_stack[] = $search_query;
-			$search_result = $this->_sfdcQuery($search_query);
-		}else{
-			return false;
-		}
-
-		if($search_result['query_result_size']>0){
-			$object_id = $search_result['payload'][0]['Id'];
-			try{
-				$record = $this->_sfdcUpdate($object_id,$object,$body);
-			}catch(\Exception $e){
-				return false;
-			}
-		}else{
-			try{
-				$record = $this->_sfdcCreate($object,$body);
-			}catch(\Exception $e){
-				return false;
-			}
-		}
-		return $record;
-		
-	}
-	
-	public function sfdcUpdate(Request $request, Response $response, $args)
-	{	
-		//get body of request and request params
-		$body = $request->getParsedBody();
-		//prepare default output
-		$output = $this->default_output;
-		//collect the output
-		$object = $request->getAttribute('object');
-		//validate object
-		if(!$this->_validateObject($object)){
-			$this->renderError($request,$response,'OBJECT_NOT_ALLOWED');
-		}
-		//
-		if(!isset($query['id'])){
-			$this->renderError($request,$response,'MISSING_REQUIRED_PARAMETER',__FUNCTION__);
-		}else{
-			//attempt an upsert on the selected object
-			try {
-				$record = $this->_sfdcUpdate($query['id'],$object,$body);
-			} catch (\Exception $e) {
-				$record =  $e->faultstring;
-			}
-			//define output
-			$output['payload'] = (array) $record;
-		}
-        return $this->renderOutput($request,$response,$output);
-	}
-	
-	private function _sfdcUpdate($object_id,$object,$body)
-	{
-		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
-		//create the sfdc record object
-		$record = new \stdClass();
-		//map fields
-		$fields = $this->_sfdcMap($object,$body);
-		$fields['Id'] = $object_id;
-		//assign the fields to the record
-		$record->fields = $fields;
-		//assign type to the record
-		$record->type = ucfirst($object);
-		//upsert to sfdc
-		$sfdc_response = $this->sfdc_client->update(array($record));
-		//return
-		return  get_object_vars($sfdc_response[0]);
-	}
-	
-
-	public function sfdcSearch(Request $request, Response $response, $args)
-	{
-		$query = $request->getQueryParams();
-		//prepare default output
-		$output = $this->default_output;
-		//check arriving email in query
-		if(isset($query['q'])){
-			$output['payload'] = $this->_sfdcSearch($query['q']);
-		}else{
-			$this->renderError($request,$response,'MISSING_REQUIRED_PARAMETER');
-		}
-		return $this->renderOutput($request,$response,$output);
-	}	
-
-	private function _sfdcSearch($q,$field='email')
-	{
-		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
-		if(isset($q)){
-			$search_query = 'FIND {'.$q.'} IN '.strtoupper($field).' FIELDS RETURNING CONTACT(ID),LEAD(ID)';
-			//do the serach
-			try{
-				$search_result = $this->sfdc_client->search($search_query);	
-				//collect search results
-				$records = $search_result->searchRecords;
-				//create arrays for each object 
-				$contacts = array();
-				$leads = array();
-				//loop over the returned object
-				foreach($records as $key=>$record){
-					if($record->type=='Contact'){
-						$contacts[] = $record->Id;
-					}else{
-						$leads[] = $record->Id;
-					}
-				}
-				
-			} catch (\Exception $e) {
-				return array('contacts'=>null,'leads'=>null,'query'=>$search_query,'query_result'=>$e->faultstring);	
-			}
-			return array('contacts'=>$contacts,'leads'=>$leads,'query'=>$search_query,'query_result'=>$records);
-		}else{
-			return false;
-		}
-	}
-
-	
+	/**
+     * Upserts a SFDC object specified in attribute using attributes supplied in message body
+	 * Creates campaign membership object if "campaign" node provided in the message body
+	 * Unlike the latter sfdcUpsertBy method, this uses a sfdcSearch function to locate the objects to be updated
+     *
+	 * @param ServerRequestInterface $request PSR7 request
+     * @param ResponseInterface $response     PSR7 response
+	 *
+	 *
+	 * Query Parameters:
+	 * @param string identifier    			any of $this->identifiers
+	 *
+	 * Message Body:
+	 * @param array     			an array of name:value attribute pairs
+	 *
+	 *
+     * @return ResponseInterface
+     */
 	public function sfdcUpsert(Request $request, Response $response, $args)
 	{
 		//get body of request and request params
@@ -745,6 +844,239 @@ class ApiController extends Controller
 
         return $this->renderOutput($request,$response,$output);
 	}
+	
+	/**
+     * Upserts a SFDC object specified in attribute using attributes supplied in message body
+     *
+	 * @param ServerRequestInterface $request PSR7 request
+     * @param ResponseInterface $response     PSR7 response
+	 *
+	 *
+	 * Query Parameters:
+	 * @param string identifier    			any of $this->identifiers
+	 *
+	 * Message Body:
+	 * @param array     			an array of name:value attribute pairs
+	 *
+	 *
+     * @return ResponseInterface
+     */
+	public function sfdcUpsertBy(Request $request, Response $response, $args)
+	{
+		//get body of request and request params
+		$body = $request->getParsedBody();
+		$query = $request->getQueryParams();
+		//prepare default output
+		$output = $this->default_output;
+		//collect the output
+		$object = $request->getAttribute('object');
+		//validate object
+		if(!$this->_validateObject($object)){
+			$this->renderError($request,$response,'OBJECT_NOT_ALLOWED');
+		}
+		//validate identifier
+		if(!isset($query['identifier'])){
+			$this->renderError($request,$response,'MISSING_REQUIRED_PARAMETER');
+		}else{
+			$record = $this->_sfdcUpsertBy(ucfirst($query['identifier']),$object,$body);
+			$output['payload'] = (array) $record;
+			return $this->renderOutput($request,$response,$output);
+		}
+		
+	}
+	
+	/**
+     * Upserts a SFDC object specified in attribute using attributes supplied in message body
+     * Unlike the sfdcUpsert function, a the sfdcQuery function is used to locate the object to be updated
+	 * Also, this function does not create the Campaign and CampaignMembership objects.
+	 *
+	 * @param string $field					  valid field to upsert by
+     * @param string $object				  name of the object
+	 * @param array $body					  array of name=>value attribute pairs
+	 *
+	 *
+     * @return stdClass $record
+     */
+	private function _sfdcUpsertBy($field,$object,$body){
+		
+		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
+		//map
+		$fields = $this->_sfdcMap($object,$body);
+		//check that field is supplied in the body
+		if(isset($fields[$field])){
+			$search_query = "SELECT Id,".$field." FROM ".ucfirst($object)." WHERE ".$field." = '".$fields[$field]."' LIMIT 1";
+			$this->call_stack[] = $search_query;
+			$search_result = $this->_sfdcQuery($search_query);
+		}else{
+			return false;
+		}
+
+		if($search_result['query_result_size']>0){
+			$object_id = $search_result['payload'][0]['Id'];
+			try{
+				$record = $this->_sfdcUpdate($object_id,$object,$body);
+			}catch(\Exception $e){
+				return false;
+			}
+		}else{
+			try{
+				$record = $this->_sfdcCreate($object,$body);
+			}catch(\Exception $e){
+				return false;
+			}
+		}
+		return $record;
+		
+	}
+	
+	/**
+     * Updates a SFDC object specified in attribute using attributes supplied in message body
+     *
+	 * @param ServerRequestInterface $request PSR7 request
+     * @param ResponseInterface $response     PSR7 response
+	 *
+	 *
+	 * Query Parameters:
+	 * @param string id    			18-Digit Id of the object to be updated
+	 *
+	 * Message Body:
+	 * @param array     			an array of name:value attribute pairs
+	 *
+	 *
+     * @return ResponseInterface
+     */
+	public function sfdcUpdate(Request $request, Response $response, $args)
+	{	
+		//get body of request and request params
+		$body = $request->getParsedBody();
+		//prepare default output
+		$output = $this->default_output;
+		//collect the output
+		$object = $request->getAttribute('object');
+		//validate object
+		if(!$this->_validateObject($object)){
+			$this->renderError($request,$response,'OBJECT_NOT_ALLOWED');
+		}
+		//
+		if(!isset($query['id'])){
+			$this->renderError($request,$response,'MISSING_REQUIRED_PARAMETER',__FUNCTION__);
+		}else{
+			//attempt an upsert on the selected object
+			try {
+				$record = $this->_sfdcUpdate($query['id'],$object,$body);
+			} catch (\Exception $e) {
+				$record =  $e->faultstring;
+			}
+			//define output
+			$output['payload'] = (array) $record;
+		}
+        return $this->renderOutput($request,$response,$output);
+	}
+	
+	
+	/**
+     * Updates a SFDC object specified in attribute using attributes supplied in message body
+     *
+	 * @param string $object_id				  18-Digit Id of the object to be updated
+     * @param string $object				  name of the object
+	 * @param array $body					  array of name=>value attribute pairs
+	 *
+	 *
+     * @return array $record
+     */
+	private function _sfdcUpdate($object_id,$object,$body)
+	{
+		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
+		//create the sfdc record object
+		$record = new \stdClass();
+		//map fields
+		$fields = $this->_sfdcMap($object,$body);
+		$fields['Id'] = $object_id;
+		//assign the fields to the record
+		$record->fields = $fields;
+		//assign type to the record
+		$record->type = ucfirst($object);
+		//upsert to sfdc
+		$sfdc_response = $this->sfdc_client->update(array($record));
+		//return
+		return  get_object_vars($sfdc_response[0]);
+	}
+	
+	/**
+     * Searches the Lead and Contact objects for ones that match the supplied string
+     *
+	 * @param ServerRequestInterface $request PSR7 request
+     * @param ResponseInterface $response     PSR7 response
+	 *
+	 *
+	 * Query Parameters:
+	 * @param string q    			a character string to search for
+	 * @param string field    		lowercase name of a field to search in, defaults to email
+	 *
+	 *
+	 *
+     * @return ResponseInterface
+     */
+	public function sfdcSearch(Request $request, Response $response, $args)
+	{
+		$query = $request->getQueryParams();
+		//prepare default output
+		$output = $this->default_output;
+		//check arriving email in query
+		if(isset($query['q'])){
+			
+			$field = 'email';
+			if(isset($query['field'])){
+				$field = $query['field'];
+			}
+			$output['payload'] = $this->_sfdcSearch($query['q'],$field);
+		}else{
+			$this->renderError($request,$response,'MISSING_REQUIRED_PARAMETER');
+		}
+		return $this->renderOutput($request,$response,$output);
+	}	
+	/**
+     * Searches the Lead and Contact objects for ones that match the supplied string
+     *
+	 * @param string q    			a character string to search for
+	 * @param string field    		lowercase name of a field to search in, defaults to email
+	 *
+	 *
+     * @return array
+     */
+	private function _sfdcSearch($q,$field='email')
+	{
+		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
+		if(isset($q)){
+			$search_query = 'FIND {'.$q.'} IN '.strtoupper($field).' FIELDS RETURNING CONTACT(ID),LEAD(ID)';
+			//do the serach
+			try{
+				$search_result = $this->sfdc_client->search($search_query);	
+				//collect search results
+				$records = $search_result->searchRecords;
+				//create arrays for each object 
+				$contacts = array();
+				$leads = array();
+				//loop over the returned object
+				foreach($records as $key=>$record){
+					if($record->type=='Contact'){
+						$contacts[] = $record->Id;
+					}else{
+						$leads[] = $record->Id;
+					}
+				}
+				
+			} catch (\Exception $e) {
+				return array('contacts'=>null,'leads'=>null,'query'=>$search_query,'query_result'=>$e->faultstring);	
+			}
+			return array('contacts'=>$contacts,'leads'=>$leads,'query'=>$search_query,'query_result'=>$records);
+		}else{
+			return false;
+		}
+	}
+
+	
+
 	////////////////////////////////////////////////
 	// MappForce Admin endpoints
 	////////////////////////////////////////////////		
@@ -756,13 +1088,6 @@ class ApiController extends Controller
 		return $this->renderOutput($request,$response,$output);
 	}
 	
-	public function settingGetAll(Request $request, Response $response, $args)
-	{
-		$output = $this->default_output;
-		$settings = Setting::all();
-		$output['payload'] = $settings;
-		return $this->renderOutput($request,$response,$output);
-	}
 	
 }
 

@@ -4,7 +4,6 @@ require 'Model/Mapp.php';
 require 'Model/Salesforce.php';
 require 'Model/Mapping.php';
 require 'Model/Setting.php';
-require 'Model/CepUser.php';
 
 // Configuration for Slim Dependency Injection Container
 $container = $app->getContainer();
@@ -16,12 +15,19 @@ $container['csrf'] = function ($c) {
     return $guard;
 };
 
-// Monolog
-$container['logger'] = function ($c) {
+//Development logger
+$container['devlogger'] = function ($c) {
     $settings = $c->get('settings')['logger'];
     $logger = new Monolog\Logger($settings['name']);
     $logger->pushProcessor(new Monolog\Processor\UidProcessor());
     $logger->pushHandler(new Monolog\Handler\StreamHandler($settings['path'], Monolog\Logger::DEBUG));
+    return $logger;
+};
+//Production logger
+$container['prodlogger'] = function ($c) {
+    $settings = $c->get('settings')['logger'];
+	$logger = new \Monolog\Logger($settings['name']);
+	$logger->pushHandler(new StreamHandler("php://stdout",Monolog\Logger::INFO));
     return $logger;
 };
 

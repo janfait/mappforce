@@ -34,7 +34,7 @@ return [
 		'cep' => [
 			'instance' => 'ecircle_marketing'
 		],
-		//encryption
+		//encryption key
 		'secret'=> getenv('SECRET'),
 		//contact address
 		'contact' =>getenv('CONTACT')

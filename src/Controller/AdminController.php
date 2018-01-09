@@ -17,6 +17,18 @@ class AdminController extends Controller
 	public $mapp_user;
 	
 	
+	/**
+     * Renderer for output adding debug data, csrf keys and logged-in user data
+     *
+     * @param ServerRequestInterface $request PSR7 request
+     * @param ResponseInterface $response     PSR7 response
+     * @param array $body                  	  array of attributes passed to the Twig template
+	 * @param string $template                path to the Twig template to be used to render body
+	 * @param numeric $status                 HTTP Status code for the Response
+	 * @param string $redirect                name of the pathName to redirect to (optional)
+     *
+     * @return ResponseInterface
+     */
 	public function renderAdminUI(Request $request, Response $response, $template, $body = null, $status = 200, $redirect = null){
 		
 		//assign default body if not supplied
@@ -48,7 +60,14 @@ class AdminController extends Controller
 			
 	}
 	
-/////////////////////////////////////////////////////////////////////////////////////	
+	/**
+     * Logout destoys all session data and kills the SFDC client and session
+     *
+     * @param ServerRequestInterface $request PSR7 request
+     * @param ResponseInterface $response     PSR7 response
+     *
+     * @return ResponseInterface
+     */	
 	public function logout(Request $request, Response $response, $args)
 	{
 		//$this->sfdc_client->invalidateSessions();
@@ -66,12 +85,26 @@ class AdminController extends Controller
 		return $this->renderAdminUI($request,$response,'admin/pages/login.twig',$body,200,'showLogin');
 	}	
 	
-/////////////////////////////////////////////////////////////////////////////////////	
+	/**
+     * Redirect to login used after logout or session timeout
+     *
+     * @param ServerRequestInterface $request PSR7 request
+     * @param ResponseInterface $response     PSR7 response
+     *
+     * @return ResponseInterface
+     */	
 	public function goLogin(Request $request, Response $response, $args)
 	{
 		return $this->renderAdminUI($request,$response,null,null,200,'showLogin');
 	}
-/////////////////////////////////////////////////////////////////////////////////////	
+	/**
+     * Shows login screen
+     *
+     * @param ServerRequestInterface $request PSR7 request
+     * @param ResponseInterface $response     PSR7 response
+     *
+     * @return ResponseInterface
+     */		
 	public function showLogin(Request $request, Response $response, $args)
     {
 		$body = $this->default_ui_status;
@@ -87,7 +120,14 @@ class AdminController extends Controller
 		return $this->renderAdminUI($request,$response,'admin/pages/login.twig',$body,200);
 
     }
-/////////////////////////////////////////////////////////////////////////////////////
+	/**
+     * Performs login, stores encrypted user data into SESSION superglobal
+     *
+     * @param ServerRequestInterface $request PSR7 request
+     * @param ResponseInterface $response     PSR7 response
+     *
+     * @return ResponseInterface
+     */	
 	public function login(Request $request, Response $response, $args)
 	{
 		$data = $request->getParsedBody();
@@ -117,7 +157,14 @@ class AdminController extends Controller
 		}
 
 	}
-/////////////////////////////////////////////////////////////////////////////////////	
+	/**
+     * Path for the HomePage
+     *
+     * @param ServerRequestInterface $request PSR7 request
+     * @param ResponseInterface $response     PSR7 response
+     *
+     * @return ResponseInterface
+     */		
 	public function home(Request $request, Response $response, $args)
     {
 		//collect the number of stored mappings
@@ -139,13 +186,27 @@ class AdminController extends Controller
 		return $this->renderAdminUI($request,$response,'admin/pages/homepage.twig',$body,200);
 
     }
-/////////////////////////////////////////////////////////////////////////////////////
+	/**
+     * Path for the Getting Started page
+     *
+     * @param ServerRequestInterface $request PSR7 request
+     * @param ResponseInterface $response     PSR7 response
+     *
+     * @return ResponseInterface
+     */	
 	public function gettingStarted(Request $request, Response $response, $args)
 	{
 		return $this->renderAdminUI($request,$response,'admin/pages/getting_started.twig',null,200);
 
 	}
-/////////////////////////////////////////////////////////////////////////////////////
+	/**
+     * Accepts POST request from the Mapping page and stores attributes given in message body in the mapping table
+     *
+     * @param ServerRequestInterface $request PSR7 request
+     * @param ResponseInterface $response     PSR7 response
+     *
+     * @return ResponseInterface
+     */	
 	public function createMapping(Request $request, Response $response, $args)
 	{
 		$data = $request->getParsedBody();
@@ -164,7 +225,14 @@ class AdminController extends Controller
 		return $response->withRedirect($this->container->router->pathFor('getMapping'));
 		
 	}
-/////////////////////////////////////////////////////////////////////////////////////	
+	/**
+     * Collects mapping and prepares it for rendering in the Mapping pages
+     *
+     * @param ServerRequestInterface $request PSR7 request
+     * @param ResponseInterface $response     PSR7 response
+     *
+     * @return ResponseInterface
+     */	
 	public function getMapping(Request $request, Response $response, $args)
 	{
 		//populate mapp client from session todo: remove from controller methods to middleware/make common for all methods
@@ -280,7 +348,14 @@ class AdminController extends Controller
         return $this->renderAdminUI($request,$response,'admin/pages/mapping.twig',$body,200);
 
 	}
-
+	/**
+     * Collects existing mapping from database and transforms it into a JSON map to be used in CEP automations
+     *
+     * @param ServerRequestInterface $request PSR7 request
+     * @param ResponseInterface $response     PSR7 response
+     *
+     * @return ResponseInterface
+     */	
 	public function createJsonMap(Request $request, Response $response, $args){
 		
 		//collect request context
@@ -341,7 +416,15 @@ class AdminController extends Controller
 		
 	}
 	
-/////////////////////////////////////////////////////////////////////////////////////	
+	/**
+     * Deletes mapping based on request body data
+	 * This function is currently unused
+     *
+     * @param ServerRequestInterface $request PSR7 request
+     * @param ResponseInterface $response     PSR7 response
+     *
+     * @return ResponseInterface
+     */	
 	public function deleteMapping(Request $request, Response $response, $args)
 	{
 		
@@ -353,7 +436,6 @@ class AdminController extends Controller
         return $this->renderAdminUI($request,$response,'admin/pages/mapping.twig',$body,200);
 
 	}
-/////////////////////////////////////////////////////////////////////////////////////
 
 
 	
