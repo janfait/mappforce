@@ -4,9 +4,13 @@
 
 #### About
 
-Mapp Force is an open-source application developed by Mapp Digital which facilitates transfer of data between the Mapp Customer Engagment Platform (CEP) and Salesforce CRM.
+Mapp Force is an open-source application which facilitates transfer of data between the Mapp Customer Engagment Platform (CEP) and Salesforce CRM.
 
 The application allows the user to configure which data is transfered between the two systems and how are Mapp CEP attributes mapped to corresponding Salesforce fields.
+
+#### Disclaimer
+
+This software is not a product of Mapp Digital and Mapp Digital nor any of its legal entities are not liable in any way for losses incurred by usage of this software. See LICENSE for more information.
 
 #### Example
 
@@ -51,42 +55,48 @@ CONTACT="jan.fait@mapp.com"
 Below is an example settings.php file for production use with a sqlite database. Mind the cep['system'] setting. This is where your Mapp CEP system name needs to be populated. If this is missing, you won't be able to make API requests. The server will respond with "Missing Mapp CEP instance setting".
 
 <pre>
-    'settings' => [
-        //production
-        'displayErrorDetails' => false,
-		'debug' => false,
-        //template location
-        'renderer' => [
-            'template_path' => __DIR__ . '/../templates/',
-        ],
-        //log name and location
-        'logger' => [
-            'name' => 'mappforce',
-            'path' => __DIR__ . '/../storage/logs/app.log',
-        ],
-		//eloquent database driver configuration
-		'db' => [
-            'driver'    => 'sqlite',
-            'database' => __DIR__ . '/../storage/database.sqlite',
-            'charset'   => 'utf8',
-            'prefix'    => '',
-        ],
-		//sfdc settings
-		'sfdc' => [
-			'wsdl'=>__DIR__ . '/../vendor/developerforce/force.com-toolkit-for-php/soapclient/partner.wsdl.xml',
-			'oauth'=>true,
-			//how many records can the user query at maximum
-			'query_limit'=>500
+	<?php
+
+	/** @var \Dotenv\Dotenv $dotenv */
+	$dotenv = new Dotenv\Dotenv(__DIR__, "/../.env");
+	$dotenv->load();
+
+	return [
+		'settings' => [
+			//production
+			'displayErrorDetails' => true,
+			'debug' => true,
+			//template location
+			'renderer' => [
+				'template_path' => __DIR__ . '/../templates/',
+			],
+			//log name and location
+			'logger' => [
+				'name' => 'mappforce',
+				'path' => __DIR__ . '/../storage/logs/app.log',
+			],
+			//eloquent configuration
+			'db' => [
+				'driver'    => 'sqlite',
+				'database' => __DIR__ . '/../storage/database.sqlite',
+				'charset'   => 'utf8',
+				'prefix'    => '',
+			],
+			//sfdc settings
+			'sfdc' => [
+				'wsdl'=>__DIR__ . '/../vendor/developerforce/force.com-toolkit-for-php/soapclient/partner.wsdl.xml',
+				'oauth'=>true,
+				'query_limit'=>500
+			],
+			'cep' => [
+				'instance' => 'ecircle_marketing'
+			],
+			//encryption key
+			'secret'=> getenv('SECRET'),
+			//contact address
+			'contact' =>getenv('CONTACT')
 		],
-		'cep' => [
-			//what is the Mapp CEP system we authenticate against
-			'instance' => 'mapp_marketing'
-		],
-		//encryption
-		'secret'=> getenv('SECRET'),
-		//contact address
-		'contact' =>getenv('CONTACT')
-    ],
+	];
 </pre>
 
 #### Migrations
