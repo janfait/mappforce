@@ -50,6 +50,8 @@ IDLE_TIMEOUT=1800
 CONTACT="jan.fait@mapp.com" 
 </pre>
 
+See dotenv package documentation for further info at https://github.com/vlucas/phpdotenv
+
 #### /srv/settings.php file
 
 Below is an example settings.php file for production use with a sqlite database. Mind the cep['system'] setting. This is where your Mapp CEP system name needs to be populated. If this is missing, you won't be able to make API requests. The server will respond with "Missing Mapp CEP instance setting".
@@ -380,16 +382,12 @@ Success Response
 You are now familiar with the upsert request and the JSON Map object in MappForce. Below are the steps to setup a first automated feed from your Mapp CEP to your Salesforce CRM. In this example, we will consider a CEP Contact opening an Email message. We will use the event-based Whiteboard to transfer this event and related Contact data to Salesforce using the upsert method. We will use the Message Name placeholder to associate this Contact with a Campaign. This step-by-step manual may differ based on latest developments in Mapp CEP. It is expected that you have defined a Transport Security Record in the correct format before creating an automation.
 
 *   1\. Go to your Mapp CEP and open the Automations section.
-*   2\. Click on Whiteboard NEW, further click on Create and selec the Event-Based Whiteboard.
-*   3\.
+*   2\. Click on Whiteboard NEW, further click on Create and select the Event-Based Whiteboard.
+*   3\. Select the starting event, f.e. Contact Enters Group
+*   4\. Select Send HTTP Request, Type = POST, encoding and put your URL there, f.e. https://YOUR-SERVER-NAME.com/mappforce/api/sfdc/upsert?identifier=email
+*   5\. Use the JSON Map from MappForce as the POST message body
+*   6\. Save and Activate your Whiteboard
 
-A request body of an upsert call looks exactly like the one used above for a create call.</div>
-
-</div>
-
-<div class="mdl-card mdl-shadow--2dp ui-page-card">
-
-<div class="mdl-card__supporting-text">
 
 ### 4\. Security
 
