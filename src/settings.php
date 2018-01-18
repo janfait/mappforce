@@ -2,16 +2,9 @@
 
 /** @var \Dotenv\Dotenv $dotenv */
 
-//where is to .env file located
-$dotfilename = __DIR__."/../";
 
-//check if it exists
-if(file_exists ($dotfilename)){
-	$dotenv = new Dotenv\Dotenv($dotfilename);
-	$dotenv->load();
-}else{
-	exit(".env file was not found. Please create the .env file with required data");
-}
+$dotenv = new Dotenv\Dotenv(__DIR__, "/../.env");
+$dotenv->load();
 
 
 return [
