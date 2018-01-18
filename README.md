@@ -112,6 +112,21 @@ Point your virtual host's document root into the /public folder.
 Make sure the sqlite database in the project /storage folder is writeable, your hosting does not allow access to the root folder and other security settings.
 
 
+#### Mod Rewrite on Apache and other .conf settings
+
+Often, a default installation on the Apache server doesn't have mod_rewrite enabled or the /sites-enabled/000-default.conf looks like:
+
+<pre>
+<Directory /var/www/>
+    Options Indexes FollowSymLinks MultiViews
+    AllowOverride None
+    Order allow,deny
+    allow from all
+</Directory>
+</pre>
+
+Change the above to 'AlloweOverride all'. 
+
 
 ### 1\. Requirements
 
@@ -255,7 +270,7 @@ Although the closest entity to Salesforce Campaign is the Mapp CEP Group, the ma
 
 ##### Authentication
 
-<span class="mdl-list__item-text-body">MappForce API layer uses HTTP Basic Authentication. To access the API, use the same credentials that you have used to login to the Admin section. The authentication must follow the below pattern:
+<span class="mdl-list__item-text-body">MappForce API layer uses HTTP Basic Authentication. To access the API, use the same credentials that you have used to login to the Admin section - the Mapp CEP API user. The authentication must follow the below pattern:
 
 <pre>username:password</pre>
 
@@ -279,11 +294,11 @@ You will be able to send a HTTP GET request to the root endpoint of the MappForc
 
 <pre>https://YOUR-SERVER-NAME.com/mappforce/api</pre>
 
-A request to the root endpoint offers only an overview of API methods and a welcome message. An example response is below:
+A request to the root endpoint offers an overview of all available API methods and a welcome message. An example response is below:
 
 <pre>{"error":false,"error_message":"","payload":["Welcome to MappForce, these are the supported API endpoints",{"method":"GET","path":"\/api\/"},{"method":"GET","path":"\/api\/mapping"}, ... ,{"method":"POST","path":"\/api\/sfdc\/{object}\/create"}]}</pre>
 
-#### 3.2\. Creating a Lead
+#### 3.2\. Creating a Lead in Salesforce
 
 * * *
 

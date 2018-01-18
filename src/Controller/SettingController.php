@@ -18,7 +18,7 @@ class SettingController extends Controller
 	
 	public function testConnection(Request $request, Response $response, $args){
 		//login
-		$this->sfdc_login();
+		$this->sfdcLogin();
 		//collect user info
 		$sfdc_user = $this->sfdc_client->getUserInfo();
 		//return
@@ -27,9 +27,9 @@ class SettingController extends Controller
 
 	public function authorizeApp(Request $request, Response $response, $args){
 		//revert if oauth settings are not initialized
-		$this->_sfdc_collect_settings();
+		$this->_sfdcCollectSettings();
 		//check presence of authorization settings
-		if(!$this->_sfdc_check_authorization_settings()){
+		if(!$this->_sfdcCheckAuthorizationSettings()){
 			return $response->withRedirect($this->container->router->pathFor('getSetting',[],['error'=>true,'message'=>'MISSING_SETTINGS']));
 		}
 		//if oauth client has not been initialized, pass back
@@ -69,12 +69,12 @@ class SettingController extends Controller
 			return $response->withRedirect($this->container->router->pathFor('getSetting',[],['error'=>true,'message'=>'MISSING_AUTH_CODE']));;
 		}
 		//pass it to the oauth token collector
-		$oauth_token = $this->_sfdc_collect_oauth_token($authorization_code);
+		$oauth_token = $this->_sfdcCollectOauthToken($authorization_code);
 		if(isset($oauth_token['error'])){
 			return $response->withRedirect($this->container->router->pathFor('getSetting',[],['error'=>true,'message'=>'FAILED_OAUTH_REQUEST']));
 		}
 		//store the token elements
-		$storage_result = $this->_sfdc_store_oauth_token($oauth_token);
+		$storage_result = $this->_sfdcStoreOauthToken($oauth_token);
 		//go back to settings with message
 		return $response->withRedirect($this->container->router->pathFor('getSetting',[],['success'=>$storage_result,'message'=>'AUTHORIZATION_SUCCESS']));
 	}
