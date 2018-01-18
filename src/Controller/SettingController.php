@@ -29,7 +29,7 @@ class SettingController extends Controller
 		//revert if oauth settings are not initialized
 		$this->_sfdcCollectSettings();
 		//check presence of authorization settings
-		if(!$this->_sfdcCheckAuthorizationSettings()){
+		if(!$this->_sfdcCheckAuthSettings()){
 			return $response->withRedirect($this->container->router->pathFor('getSetting',[],['error'=>true,'message'=>'MISSING_SETTINGS']));
 		}
 		//if oauth client has not been initialized, pass back

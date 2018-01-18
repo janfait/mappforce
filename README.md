@@ -128,6 +128,33 @@ Often, a default installation on the Apache server doesn't have mod_rewrite enab
 Change the above to 'AlloweOverride all'. 
 
 
+#### Installation Example on a Linux Machine
+
+user@some-server:/var/www/# git clone https://github.com/janfait/mappforce
+Cloning into 'mappforce'...
+ ...
+ ...
+Checking connectivity... done.
+user@some-server:/var/www/#  cd mappforce
+user@some-server:/var/www/mappforce# composer install
+Do not run Composer as root/super user! See https://getcomposer.org/root for details
+Loading composer repositories with package information
+Installing dependencies (including require-dev) from lock file
+ ...
+ ... 
+Generating autoload files
+ ...
+user@some-server:/var/www/mappforce# nano .env //use any other text editor here
+
+//example .env file
+SECRET="myverysecretencryptionkey"
+IDLE_TIMEOUT=1800
+CONTACT="jan.fait@mapp.com" 
+
+user@some-server:/var/www/mappforce# cd storage
+user@some-server:/var/www/mappforce/storage# php run_migration.php
+Migrations successful
+
 ### 1\. Requirements
 
 * * *
