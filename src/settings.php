@@ -32,10 +32,10 @@ return [
 		'sfdc' => [
 			'wsdl'=>__DIR__ . '/../vendor/developerforce/force.com-toolkit-for-php/soapclient/partner.wsdl.xml',
 			'oauth'=>true,
-			'query_limit'=>500
+			'query_limit'=>getenv('QUERY_LIMIT')
 		],
 		'cep' => [
-			'instance' => 'ecircle_marketing'
+			'instance' => getenv('CEP')
 		],
 		//encryption key
 		'secret'=> getenv('SECRET'),

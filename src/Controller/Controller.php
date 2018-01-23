@@ -203,7 +203,7 @@ class Controller
      * @param array $token 			An array received from the OAuth endpoint, should include access_token, refresh_token, issued_at and id nodes
      * @return boolean
      */	
-	private function _sfdcStoreOauthToken($token)
+	public function _sfdcStoreOauthToken($token)
 	{
 		
 		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
@@ -251,7 +251,7 @@ class Controller
      * @param string $code 			An array received from the OAuth endpoint, should include access_token, refresh_token, issued_at and id nodes
      * @return array $response
      */	
-	private function _sfdcCollectOauthToken($code)
+	public function _sfdcCollectOauthToken($code)
 	{
 		
 		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);

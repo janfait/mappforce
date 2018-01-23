@@ -38,23 +38,27 @@ MappForce uses a number of composer packages. Be sure to have composer installed
 
 #### .env file
 
-An .env file in the root folder of MappForce should host two important variables. An encryption key and a idle_timeout variable which indicates the session length for the UI user.
+An .env file in the root folder of MappForce should host three important variables. An encryption key, you CEP instance name and a idle_timeout variable which indicates the session length for the UI user.
 An example .env file looks like this:
 
 <pre>
 # encryption key for sensitive session variables
-SECRET="myverysecretencryptionkey"
+SECRET="value"
 # maximum length of period without activity before logout
 IDLE_TIMEOUT=1800
 #contact person
-CONTACT="jan.fait@mapp.com" 
+CONTACT="jan.fait@mapp.com"
+#CEP INSTANCE
+CEP="mapp_marketing"
+#QUERY LIMIT FOR SFDC
+QUERY_LIMIT=500
 </pre>
 
 See dotenv package documentation for further info at https://github.com/vlucas/phpdotenv
 
 #### /srv/settings.php file
 
-Below is an example settings.php file for production use with a sqlite database. Mind the cep['system'] setting. This is where your Mapp CEP system name needs to be populated. If this is missing, you won't be able to make API requests. The server will respond with "Missing Mapp CEP instance setting".
+Below is an example settings.php file for production use with a sqlite database. Mind the cep['system'] setting. This is where your Mapp CEP system name needs to be populated from your .env file.
 
 <pre>
 	<?php
@@ -91,7 +95,7 @@ Below is an example settings.php file for production use with a sqlite database.
 				'query_limit'=>500
 			],
 			'cep' => [
-				'instance' => 'ecircle_marketing'
+				'instance' => getenv('CEP')
 			],
 			//encryption key
 			'secret'=> getenv('SECRET'),
@@ -104,32 +108,30 @@ Below is an example settings.php file for production use with a sqlite database.
 #### Migrations
 
 Before MappForce becomes operational, you have to run the */storage/run_migration.php* file. This will initialize the database with default settings which can be edited in UI later. Also, it will make a copy of the existing database and store it with a timestamp value as a separate file as a backup.
-**Remove of otherwise protect the run_migration.php file when deploying in production.** Running this file again will erase your existing database and replace it with a new instance.
+**Remove of otherwise protect the run_migration.php file when deploying in production.** Running this script again will erase your existing database and replace it with a new instance.
 
 #### Folder access, Virtual Host
 
-Point your virtual host's document root into the /public folder.
-Make sure the sqlite database in the project /storage folder is writeable, your hosting does not allow access to the root folder and other security settings.
+Point your virtual host's document root into the /public folder. Consult your network administrator if you are not sure how to configure Virtual Hosts.
+Make sure the sqlite database in the project /storage and storage/logs/ folder are web writeable, your hosting does not allow access to the root folder and other security settings.
 
 
 #### Mod Rewrite on Apache and other .conf settings
 
 Often, a default installation on the Apache server doesn't have mod_rewrite enabled or the /sites-enabled/000-default.conf looks like:
-
 <pre>
-<Directory /var/www/>
     Options Indexes FollowSymLinks MultiViews
     AllowOverride None
     Order allow,deny
     allow from all
-</Directory>
 </pre>
+Change the above to 'AlloweOverride all'.
 
-Change the above to 'AlloweOverride all'. 
+#### Installation Example on a Ubuntu Machine
 
+Please note that the output can differ depending on your environment.
 
-#### Installation Example on a Linux Machine
-
+<pre>
 user@some-server:/var/www/# git clone https://github.com/janfait/mappforce
 Cloning into 'mappforce'...
  ...
@@ -137,12 +139,13 @@ Cloning into 'mappforce'...
 Checking connectivity... done.
 user@some-server:/var/www/#  cd mappforce
 user@some-server:/var/www/mappforce# composer install
-Do not run Composer as root/super user! See https://getcomposer.org/root for details
-Loading composer repositories with package information
-Installing dependencies (including require-dev) from lock file
+...
+...
+>Loading composer repositories with package information
+>Installing dependencies (including require-dev) from lock file
  ...
  ... 
-Generating autoload files
+>Generating autoload files
  ...
 user@some-server:/var/www/mappforce# nano .env //use any other text editor here
 
@@ -153,8 +156,8 @@ CONTACT="jan.fait@mapp.com"
 
 user@some-server:/var/www/mappforce# cd storage
 user@some-server:/var/www/mappforce/storage# php run_migration.php
-Migrations successful
-
+> Migrations successful
+</pre>
 ### 1\. Requirements
 
 * * *

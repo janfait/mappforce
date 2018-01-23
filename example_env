@@ -1,0 +1,10 @@
+# encryption key for sensitive session variables
+SECRET="value"
+# maximum length of period without activity before logout
+IDLE_TIMEOUT=1800
+#contact person
+CONTACT="jan.fait@mapp.com"
+#CEP INSTANCE
+CEP="ecircle_marketing"
+#QUERY LIMIT FOR SFDC
+QUERY_LIMIT=500
