@@ -52,7 +52,7 @@ class Controller
 		$this->messages = array(
 			'MISSING_REQUIRED_PARAMETER' => 'Your request query string is missing a required parameter',
 			'OBJECT_NOT_ALLOWED' => 'Your request uses an invalid object attribute. The allowed objects are:'.implode(",",$this->valid_objects),
-			'IDENTIFER_NOT_ALLOWED' => 'Your request uses an invalid parameter. The allowed identifiers are:'.implode(",",$this->identifiers),
+			'IDENTIFIER_NOT_ALLOWED' => 'Your request uses an invalid parameter. The allowed identifiers are:'.implode(",",$this->identifiers),
 			'MISSING_REQUIRED_FIELD' => 'Your request body is missing a required field.',
 			'MISSING_SETTINGS' => 'Some required settings are not populated.',
 			'INVALID_STATE' => 'The response state parameter does not match the request. A security problem has occured.',
