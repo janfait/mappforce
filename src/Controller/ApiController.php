@@ -585,7 +585,7 @@ class ApiController extends Controller
 			$output['payload'] = $transfer_results;
 			
 		}else{
-			$this->renderError($request,$response,'MISSING_REQUIRED_PARAMETER');
+			return $this->renderError($request,$response,'MISSING_REQUIRED_PARAMETER');
 		}
 
 		
@@ -821,7 +821,7 @@ class ApiController extends Controller
 			$object_id = $records['leads'][0];
 			$record = $this->_sfdcUpdate($object_id,$object,$body);
 		}else{
-			$record = $this->_sfdcCreate('Lead',$body);	
+			$record = $this->_sfdcCreate('lead',$body);	
 		}
 		//add to campaign if campaign object supplied
 		if(isset($body["campaign"])){
