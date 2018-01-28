@@ -212,12 +212,12 @@ class ApiController extends Controller
 		
 		
 		if(!isset($query['email'])){
-			$this->renderError($request,$response,'MISSING_REQUIRED_PARAMETER');
+			return $this->renderError($request,$response,'MISSING_REQUIRED_PARAMETER');
 		}else{
 			$this->mapp_contact->setExecutor($this->mapp_client);
 			$cep_response = $this->mapp_contact->getByEmail(array('email'=>$query['email']));
 			if(isset($cep_response['error'])){
-				$this->renderError($request,$response,null,'CEP ERROR');
+				return $this->renderError($request,$response,null,'CEP ERROR');
 			}
 			$output['payload'] = $cep_response['data'];
 		}
@@ -245,12 +245,12 @@ class ApiController extends Controller
 		$output = $this->default_output;
 		
 		if(!isset($query['email'])){
-			$this->renderError($request,$response,'MISSING_REQUIRED_PARAMETER');
+			return $this->renderError($request,$response,'MISSING_REQUIRED_PARAMETER');
 		}else{
 			$this->mapp_contact->setExecutor($this->mapp_client);
 			$cep_response = $this->mapp_contact->upsertByEmail(array('email'=>$query['email']),$body);
 			if(isset($cep_response['error'])){
-				$this->renderError($request,$response,null,'CEP ERROR');
+				return $this->renderError($request,$response,null,'CEP ERROR');
 			}
 			$output['payload'] = $cep_response['data'];
 		}
@@ -324,7 +324,7 @@ class ApiController extends Controller
 		$object = $request->getAttribute('object');
 		//validate object
 		if(!$this->_validateObject($object)){
-			$this->renderError($request,$response,'OBJECT_NOT_ALLOWED');
+			return $this->renderError($request,$response,'OBJECT_NOT_ALLOWED');
 		}
 		$sfdc_response = $this->sfdc_client->describeSObject($object);
         return $response->withStatus(200);
@@ -378,7 +378,7 @@ class ApiController extends Controller
 		$object = $request->getAttribute('object');
 		//validate object
 		if(!$this->_validateObject($object)){
-			$this->renderError($request,$response,'OBJECT_NOT_ALLOWED');
+			return $this->renderError($request,$response,'OBJECT_NOT_ALLOWED');
 		}
 		//prepare default output
 		$output = $this->default_output;
@@ -499,7 +499,7 @@ class ApiController extends Controller
 			$search_query = $query['q'];
 			$output = $this->_sfdcQuery($search_query);
 		}else{
-			$this->renderError($request,$response,'MISSING_REQUIRED_PARAMETER');
+			return $this->renderError($request,$response,'MISSING_REQUIRED_PARAMETER');
 		}
 		
 		return $this->renderOutput($request,$response,$output);
@@ -564,7 +564,7 @@ class ApiController extends Controller
 		$object = $request->getAttribute('object');
 		//validate object
 		if(!$this->_validateObject($object)){
-			$this->renderError($request,$response,'OBJECT_NOT_ALLOWED');
+			return $this->renderError($request,$response,'OBJECT_NOT_ALLOWED');
 		}
 		if(isset($body['q'])){
 			$search_query = $body['q'];
@@ -634,11 +634,11 @@ class ApiController extends Controller
 		$object = $request->getAttribute('object');
 		//validate query
 		if(!$this->_validateQuery(array('object_id','campaign_id'),$query)){
-			$this->renderError($request,$response,'MISSING_REQUIRED_PARAMETER');
+			return $this->renderError($request,$response,'MISSING_REQUIRED_PARAMETER');
 		}
 		//validate object
 		if(!$this->_validateObject($object)){
-			$this->renderError($request,$response,'OBJECT_NOT_ALLOWED');
+			return $this->renderError($request,$response,'OBJECT_NOT_ALLOWED');
 		}
 		if(!isset($query['status'])){
 			$status = $this->sfdcGetDefaultStatus();
@@ -717,7 +717,7 @@ class ApiController extends Controller
 		$object = $request->getAttribute('object');
 		//validate object
 		if(!$this->_validateObject($object)){
-			$this->renderError($request,$response,'OBJECT_NOT_ALLOWED');
+			return $this->renderError($request,$response,'OBJECT_NOT_ALLOWED');
 		}
 		//attempt an upsert on the selected object
 		try {
@@ -788,10 +788,10 @@ class ApiController extends Controller
 		$output = $this->default_output;
 		//if identifier isn't set
 		if(!isset($query['identifier'])){
-			$this->renderError($request,$response,'MISSING_REQUIRED_PARAMETER');
+			return $this->renderError($request,$response,'MISSING_REQUIRED_PARAMETER');
 		//if identifier is outside of the alloweed value range
 		}else if(!array_key_exists($query['identifier'],$this->identifiers)){
-			$this->renderError($request,$response,'IDENTIFIER_NOT_ALLOWED');
+			return $this->renderError($request,$response,'IDENTIFIER_NOT_ALLOWED');
 		}else{
 			$identifier = $query['identifier'];
 			//construct the identifier key
@@ -801,7 +801,7 @@ class ApiController extends Controller
 		}
 		//check if identifier key node is present in the supplied JSON object
 		if(!isset($body[$identifier_key])){
-			$this->renderError($request,$response,'MISSING_REQUIRED_FIELD');
+			return $this->renderError($request,$response,'MISSING_REQUIRED_FIELD');
 		}
 		//collect existing records using SOSL
 		$records = $this->_sfdcSearch($body[$identifier_key]);
@@ -873,11 +873,11 @@ class ApiController extends Controller
 		$object = $request->getAttribute('object');
 		//validate object
 		if(!$this->_validateObject($object)){
-			$this->renderError($request,$response,'OBJECT_NOT_ALLOWED');
+			return $this->renderError($request,$response,'OBJECT_NOT_ALLOWED');
 		}
 		//validate identifier
 		if(!isset($query['identifier'])){
-			$this->renderError($request,$response,'MISSING_REQUIRED_PARAMETER');
+			return $this->renderError($request,$response,'MISSING_REQUIRED_PARAMETER');
 		}else{
 			$record = $this->_sfdcUpsertBy(ucfirst($query['identifier']),$object,$body);
 			$output['payload'] = (array) $record;
@@ -956,11 +956,11 @@ class ApiController extends Controller
 		$object = $request->getAttribute('object');
 		//validate object
 		if(!$this->_validateObject($object)){
-			$this->renderError($request,$response,'OBJECT_NOT_ALLOWED');
+			return $this->renderError($request,$response,'OBJECT_NOT_ALLOWED');
 		}
 		//
 		if(!isset($query['id'])){
-			$this->renderError($request,$response,'MISSING_REQUIRED_PARAMETER',__FUNCTION__);
+			return $this->renderError($request,$response,'MISSING_REQUIRED_PARAMETER',__FUNCTION__);
 		}else{
 			//attempt an upsert on the selected object
 			try {
@@ -1032,7 +1032,7 @@ class ApiController extends Controller
 			}
 			$output['payload'] = $this->_sfdcSearch($query['q'],$field);
 		}else{
-			$this->renderError($request,$response,'MISSING_REQUIRED_PARAMETER');
+			return $this->renderError($request,$response,'MISSING_REQUIRED_PARAMETER');
 		}
 		return $this->renderOutput($request,$response,$output);
 	}	
