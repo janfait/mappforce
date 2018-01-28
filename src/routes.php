@@ -62,7 +62,9 @@ $app->group('/api', function() {
 	$this->group('/cep', function() {
 		$this->get('', 'MappIntegrator\Controller\ApiController:cepRoot');
 		$this->get('/', 'MappIntegrator\Controller\ApiController:cepRoot');
+		//get cep contact by email
 		$this->get('/contact/get','MappIntegrator\Controller\ApiController:cepGetContact');
+		//upsert cep contact by email
 		$this->post('/contact/upsert','MappIntegrator\Controller\ApiController:cepUpsertContact');
 	});
 	

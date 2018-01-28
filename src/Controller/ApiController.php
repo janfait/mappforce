@@ -36,6 +36,8 @@ class ApiController extends Controller
 	
 	private function renderOutput(Request $request, Response $response, $data, $status = 200){
 		
+		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__,'params'=>func_get_args());
+		
 		//allow debug only for applications in development
 		if($request->getParam('debug') && $this->settings['debug']){
 			$data['debug'] = array(
@@ -65,9 +67,11 @@ class ApiController extends Controller
 	
 	private function renderError(Request $request, Response $response, $error_code = null, $error_message = null, $function = null, $status = 400){
 		
+		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__,'params'=>func_get_args());
+		
 		$data = $this->default_output;
 		$data['error'] = true;
-		if(in_array($error_code,$this->messages)){
+		if(array_key_exists($error_code,$this->messages)){
 			$data['error_message'] = $this->messages[$error_code];
 		}else{
 			$data['error_message'] = $error_message;
@@ -128,6 +132,7 @@ class ApiController extends Controller
      */
 	private function _countryMap($string,$iso){
 		
+		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__,'params'=>func_get_args());
 		//retrieve country map
 		$country_map = $this->container->CountryMap;
 		
