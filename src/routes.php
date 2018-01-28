@@ -80,7 +80,7 @@ $app->group('/api', function() {
 		$this->get('/user', 'MappIntegrator\Controller\ApiController:sfdcUser');
 		//run a query
 		$this->get('/query', 'MappIntegrator\Controller\ApiController:sfdcQuery');
-		//run a search
+		//run a search by a searchable field
 		$this->get('/search', 'MappIntegrator\Controller\ApiController:sfdcSearch');
 		//transfer an object using a query
 		$this->post('/{object}/transfer', 'MappIntegrator\Controller\ApiController:sfdcTransferQuery');
@@ -88,10 +88,12 @@ $app->group('/api', function() {
 		$this->get('/{object}/fields', 'MappIntegrator\Controller\ApiController:sfdcObjectFields');
 		//map
 		$this->post('/{object}/map', 'MappIntegrator\Controller\ApiController:sfdcMap');
-		//upsert generic
+		//upsert with campaign and campaign member
 		$this->post('/upsert', 'MappIntegrator\Controller\ApiController:sfdcUpsert');
-		//generic upsert by method
+		//generic upsert
 		$this->post('/{object}/upsertby', 'MappIntegrator\Controller\ApiController:sfdcUpsertBy');
+		//update
+		$this->post('/{object}/upsertby', 'MappIntegrator\Controller\ApiController:sfdcUpdate');
 		//create a defined object
 		$this->post('/{object}/create', 'MappIntegrator\Controller\ApiController:sfdcCreate');
 	});
