@@ -1,20 +1,24 @@
-### What is Mapp Force?
+### What is MappForce?
 
 * * *
 
 #### About
 
-Mapp Force is an open-source application which facilitates transfer of data between the Mapp Customer Engagment Platform (CEP) and Salesforce CRM.
+MappForce is an open-source application which facilitates transfer of data between the Mapp Customer Engagment Platform (CEP) and Salesforce CRM.
 
 The application allows the user to configure which data is transfered between the two systems and how are Mapp CEP attributes mapped to corresponding Salesforce fields.
 
+#### Status
+
+This application is in the testing stage and all production deployment is done at your own risk. Please file any issues or remarks to the author here.
+
 #### Disclaimer
 
-This software is not a product of Mapp Digital and Mapp Digital nor any of its legal entities are not liable in any way for losses incurred by usage of this software. See LICENSE for more information.
+This software is not a product of Mapp Digital and Mapp Digital and all its legal entities are not liable in any way for losses or damage incurred by usage of this software. See LICENSE for more information.
 
-#### Example
+#### Example Use
 
-For illlustration, consider an event occuring in your Mapp CEP system, such as an Email Message is opened by a Contact, a Contact entering a Group or its Profile attribute changing. Using Automations feature of Mapp CEP, you are able to fire an outgoing HTTP request to selected Mapp Force endpoints with information about this event and the Contact by including a message body in a defined format. Have you configured your attribute Mapping and authorized MappForce to access your Salesforce in the Settings section, Mapp Force connects to your Salesforce instance and performs a data operation defined by the endpoint, commonly an insert or update of the corresponding record.
+For illlustration, consider an event occuring in your Mapp CEP system, such as an Email Message is opened by a Contact, a Contact entering a Group or its Profile attribute changing. Using Automations feature of Mapp CEP, you are able to fire an outgoing HTTP request to selected MappForce endpoints with information about this event and the Contact by including a message body in a defined format. Have you configured your attribute Mapping and authorized MappForce to access your Salesforce in the Settings section, MappForce connects to your Salesforce instance and performs a data operation defined by the endpoint, commonly an insert or update of the corresponding record.
 
 ### Installation
 
@@ -164,7 +168,7 @@ user@some-server:/var/www/mappforce/storage# php run_migration.php
 
 * * *
 
-Make sure all the below requirements are met before you start configuring your Mapp Force instance.
+Make sure all the below requirements are met before you start configuring your MappForce instance.
 
 #### 1.1\. Mapp Customer Engagement Platform
 
@@ -182,7 +186,7 @@ This allows that an HTTP Basic Authorization header can be added to the HTTP req
 
 ##### IP Whitelisting
 
-The IP of the server, where your instance of MappForce is deployed has to be whitelisted to access the Mapp CEP. This configuration is only relevant if your Mapp Force instance is self-hosted on one of your proprietary servers or hosting platforms like Heroku, Digital Ocean, AWS, ...
+The IP of the server, where your instance of MappForce is deployed has to be whitelisted to access the Mapp CEP. This configuration is only relevant if your MappForce instance is self-hosted on one of your proprietary servers or hosting platforms like Heroku, Digital Ocean, AWS, ...
 
 #### 1.2\. Salesforce
 
@@ -194,7 +198,7 @@ It is recommended to authenticate against your Salesforce CRM instance using an 
 
 ##### System Administrator Profile
 
-While some Mapp Force functionality may be available even for lower level roles, a System Administrator profile authorizing the App ensures that you will be able to retrieve your object definitions like custom fields, perform edits and deletions to all records and send email notifications.
+While some MappForce functionality may be available even for lower level roles, a System Administrator profile authorizing the App ensures that you will be able to retrieve your object definitions like custom fields, perform edits and deletions to all records and send email notifications.
 
 ##### SOAP API enabled with sufficient limits
 
@@ -268,7 +272,7 @@ Standard Attributes are identical for every instance of Mapp CEP and you will no
 
 ##### Custom Attributes
 
-Custom Attributes are created by Mapp CEP users and are sourced after the user has logged into Mapp Force. Therefore, you will see the up-to-date state of your Custom Attributes, ready for mapping anytime you log in.
+Custom Attributes are created by Mapp CEP users and are sourced after the user has logged into MappForce. Therefore, you will see the up-to-date state of your Custom Attributes, ready for mapping anytime you log in.
 
 ##### Member Attributes and Custom Values
 
@@ -278,7 +282,7 @@ Member Attributes only exist in a Mapp CEP Group membership context - a CEP Cont
 
 * * *
 
-Although the closest entity to Salesforce Campaign is the Mapp CEP Group, the mapping is not limited to selected Group Settings and all custom Group Attributes, but also, just like in the above case for Member Attributes, allows you to populate custom fields on the Campaign with user-defined data. As the attributes are group-specific, Mapp Force cannot preload them for mapping like in the case of Standard and Custom Attributes.
+Although the closest entity to Salesforce Campaign is the Mapp CEP Group, the mapping is not limited to selected Group Settings and all custom Group Attributes, but also, just like in the above case for Member Attributes, allows you to populate custom fields on the Campaign with user-defined data. As the attributes are group-specific, MappForce cannot preload them for mapping like in the case of Standard and Custom Attributes.
 
 </div>
 
