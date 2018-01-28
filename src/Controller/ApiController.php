@@ -401,7 +401,7 @@ class ApiController extends Controller
      */
 	private function _cepMap($object,$body)
 	{
-		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
+		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__,'params'=>func_get_args());
 		//get mapping from database for the particular object, key by cep_api_name
 		$mapping = Mapping::where([['sfdc_object',$object],['sfdc_name','<>','']])->get()->keyBy('sfdc_name')->toArray();
 		//create fields array
@@ -434,7 +434,7 @@ class ApiController extends Controller
      */
 	private function _sfdcMap($object,$body)
 	{
-		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
+		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__,'params'=>func_get_args());
 		//get mapping from database for the particular object, key by cep_api_name
 		$mapping = Mapping::where([['sfdc_object',$object],['sfdc_name','<>','']])->get()->keyBy('cep_api_name')->toArray();
 		//create fields array
@@ -472,6 +472,8 @@ class ApiController extends Controller
 				$fields['Country'] = $this->_countryMap($fields['Country'],'alpha-2');
 			}
 		}
+		//add mapping to response stack
+		$this->response_stack[] = array(__FUNCTION__=>$fields);
 		
 		return $fields;
 	}
@@ -511,7 +513,7 @@ class ApiController extends Controller
      */
 	private function _sfdcQuery($query)
 	{
-		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
+		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__,'params'=>func_get_args());
 		$results = $this->default_output;
 		
 		$results['query_result_size'] = 0;
@@ -597,6 +599,7 @@ class ApiController extends Controller
      */
 	private function _sfdcTransferRecord($record,$object){
 		
+		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__,'params'=>func_get_args());
 		//map the record to CEP
 		$mapped_body = $this->_cepMap($object,$record);
 		//use mapp client to upsert the record
@@ -664,7 +667,7 @@ class ApiController extends Controller
      */
 	private function _sfdcAddToCampaign($object,$object_id,$campaign_id,$status= null)
 	{
-		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
+		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__,'params'=>func_get_args());
 		//define the membership object
 		$record = new \stdClass();
 		//add status
@@ -743,7 +746,7 @@ class ApiController extends Controller
      */
 	private function _sfdcCreate($object,$body)
 	{
-		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
+		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__,'params'=>func_get_args());
 		//create the sfdc record object
 		$record = new \stdClass();
 		//map fields
@@ -897,7 +900,7 @@ class ApiController extends Controller
      */
 	private function _sfdcUpsertBy($field,$object,$body){
 		
-		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
+		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__,'params'=>func_get_args());
 		//map
 		$fields = $this->_sfdcMap($object,$body);
 		//check that field is supplied in the body
@@ -984,7 +987,7 @@ class ApiController extends Controller
      */
 	private function _sfdcUpdate($object_id,$object,$body)
 	{
-		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
+		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__,'params'=>func_get_args());
 		//create the sfdc record object
 		$record = new \stdClass();
 		//map fields
@@ -1044,7 +1047,7 @@ class ApiController extends Controller
      */
 	private function _sfdcSearch($q,$field='email')
 	{
-		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);
+		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__,'params'=>func_get_args());
 		if(isset($q)){
 			$search_query = 'FIND {'.$q.'} IN '.strtoupper($field).' FIELDS RETURNING CONTACT(ID),LEAD(ID)';
 			//do the serach
