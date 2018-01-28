@@ -314,6 +314,10 @@ An authenticated request will look like this:
 
 </span>
 
+##### API DOcumentation
+
+https://documenter.getpostman.com/view/3618954/collection/7TNgXbb
+
 ##### First Call
 
 Assuming your deployment looks like the below:
