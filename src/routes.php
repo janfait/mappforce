@@ -93,7 +93,7 @@ $app->group('/api', function() {
 		//generic upsert
 		$this->post('/{object}/upsertby', 'MappIntegrator\Controller\ApiController:sfdcUpsertBy');
 		//update
-		$this->post('/{object}/upsertby', 'MappIntegrator\Controller\ApiController:sfdcUpdate');
+		$this->post('/{object}/update', 'MappIntegrator\Controller\ApiController:sfdcUpdate');
 		//create a defined object
 		$this->post('/{object}/create', 'MappIntegrator\Controller\ApiController:sfdcCreate');
 	});

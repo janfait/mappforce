@@ -110,10 +110,10 @@ Below is an example settings.php file for production use with a sqlite database.
 Before MappForce becomes operational, you have to run the */storage/run_migration.php* file. This will initialize the database with default settings which can be edited in UI later. Also, it will make a copy of the existing database and store it with a timestamp value as a separate file as a backup.
 **Remove of otherwise protect the run_migration.php file when deploying in production.** Running this script again will erase your existing database and replace it with a new instance.
 
-#### Folder access, Virtual Host
+#### Prevent access, configure Virtual Host
 
-Point your virtual host's document root into the /public folder. Consult your network administrator if you are not sure how to configure Virtual Hosts.
-Make sure the sqlite database in the project /storage and storage/logs/ folder are web writeable, your hosting does not allow access to the root folder and other security settings.
+To secure your app files, point your virtual host's document root into the /public folder. Consult your network administrator if you are not sure how to configure Virtual Hosts
+Make sure the sqlite database in the project /storage and storage/logs/ folder are web writeable, your hosting does not allow access to the root or storage folders and disable directory listing.
 
 
 #### Mod Rewrite on Apache and other .conf settings
@@ -152,7 +152,9 @@ user@some-server:/var/www/mappforce# nano .env //use any other text editor here
 //example .env file
 SECRET="myverysecretencryptionkey"
 IDLE_TIMEOUT=1800
-CONTACT="jan.fait@mapp.com" 
+CONTACT="jan.fait@mapp.com"
+CEP="mapp_marketing"
+QUERY_LIMIT=500
 
 user@some-server:/var/www/mappforce# cd storage
 user@some-server:/var/www/mappforce/storage# php run_migration.php
