@@ -330,7 +330,7 @@ class Controller
      * @param none			
      * @return array $response
      */	
-	private function _sfdcCollectIdentity($id)
+	public function _sfdcCollectIdentity($id)
 	{
 		
 		$this->call_stack[] = array('time'=>microtime(),'function'=>__FUNCTION__);

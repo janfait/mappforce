@@ -17,8 +17,6 @@ use Slim\Http\Response;
  * a) Wrapper function - this function consumes the PSR7 request, collects and validates query parameters and message body which are then passed to the executor function, returns a PSR7 response 
  * b) Executor function - typically starts with _sfdc which accepts input from the Wrapper function and wraps around the Salesforce native SOAP API Toolkit functions, passing the resposne back to the Wrapper
  *
- 
- 
  */
 class ApiController extends Controller
 {
