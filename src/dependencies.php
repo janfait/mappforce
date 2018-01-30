@@ -31,6 +31,15 @@ $container['prodlogger'] = function ($c) {
     return $logger;
 };
 
+//custom not found handler
+$c['notFoundHandler'] = function ($c) {
+    return function ($request, $response) use ($c) {
+        return $c['response']
+            ->withStatus(404)
+            ->withJson(array('error'=>true,'error_message'=>'Page Not Found'));
+    };
+};
+
 // Eloquent Database
 $capsule = new Illuminate\Database\Capsule\Manager;
 $capsule->addConnection($container->get('settings')['db']);
