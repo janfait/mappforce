@@ -3,9 +3,10 @@
 /** @var \Dotenv\Dotenv $dotenv */
 
 
-$dotenv = new Dotenv\Dotenv(__DIR__, "/../.env");
-$dotenv->load();
-
+if (file_exists(__DIR__ . '/../.env')) {
+  $dotenv = new Dotenv\Dotenv(__DIR__, "/../.env");
+  $dotenv->load();
+}
 
 return [
     'settings' => [

@@ -58,11 +58,13 @@ CEP="mapp_marketing"
 QUERY_LIMIT=500
 </pre>
 
+Some SaaS platforms allow you to configure environment variables through the user dashboard and supplying a .env file in turn does not work there.
+
 See dotenv package documentation for further info at https://github.com/vlucas/phpdotenv
 
 #### /srv/settings.php file
 
-Below is an example settings.php file for production use with a sqlite database. Mind the cep['system'] setting. This is where your Mapp CEP system name needs to be populated from your .env file.
+Below is an example settings.php file for production use with a sqlite database. Mind the cep['instance'] setting. This is where your Mapp CEP system name needs to be populated from your .env file.
 
 <pre>
 	<?php
@@ -164,6 +166,19 @@ user@some-server:/var/www/mappforce# cd storage
 user@some-server:/var/www/mappforce/storage# php run_migration.php
 > Migrations successful
 </pre>
+
+
+#### First login
+
+After a successful installation, you will be able to access MappForce at YOUR-SERVER-NAME/mappforce. Of course, this may vary depending on your installation folder.
+MappForce app will redirect you to a login.
+At this point, you should have a Mapp CEP API User set up. See help.mapp.com to learn more about API User setup. Your API User will require the Client Admin rights to 
+be able to perform all the tasks in MappForce.
+You will use your Mapp CEP instance name (the name of your system) and the API User credentials to access MappForce.
+Once logged in, go to "Getting Started" to learn about how to set up your app.
+
+
+
 ### 1\. Requirements
 
 * * *
@@ -186,7 +201,7 @@ This allows that an HTTP Basic Authorization header can be added to the HTTP req
 
 ##### IP Whitelisting
 
-The IP of the server, where your instance of MappForce is deployed has to be whitelisted to access the Mapp CEP. This configuration is only relevant if your MappForce instance is self-hosted on one of your proprietary servers or hosting platforms like Heroku, Digital Ocean, AWS, ...
+The IP of the server, where your instance of MappForce is deployed has to be whitelisted to access the Mapp CEP. This configuration is only relevant if your MappForce instance is self-hosted on one of your proprietary servers or hosting platforms like Digital Ocean, AWS, ...
 
 #### 1.2\. Salesforce
 
@@ -247,10 +262,6 @@ After a succesful authorization, MappForce will show a new 'Test Connection' but
 Your Redirect URL (also called Callback URL) has to be hosted on a secure domain (https://...). Typically, when this would look something like:
 
 <pre>https://YOUR-SERVER-NAME.com/mappforce/admin/settings/oauth</pre>
-
-or if MappForce is hosted on platforms such as Heroku, it will be this:
-
-<pre>https://YOUR-APP-NAME.herokuapp.com/admin/settings/oauth</pre>
 
 This is the URL you will be redirected to after a succesful authorization of the MappForce App by Salesforce.
 
